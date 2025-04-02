@@ -1,0 +1,12 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+models.workspace = true
+extractor.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
