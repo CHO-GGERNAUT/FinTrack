@@ -10,13 +10,13 @@ pub struct Card {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
 
-    pub card_number_last4: i32,
+    pub card_number_last4: String,
     pub encrypted_card_number: Vec<u8>,
 
-    pub issued_at: NaiveDate,
-    pub expires_at: NaiveDate,
-    pub billing_day: i32, // Between 1 and 31
-    pub credit_limit: Option<f64>,
+    pub issued_at: Option<NaiveDate>,
+    pub expires_at: Option<NaiveDate>,
+    pub billing_day: Option<i32>, // Between 1 and 31
+    pub credit_limit: Option<rust_decimal::Decimal>,
     pub brand: CardBrand,   // 'visa', 'mastercard', 'amex', etc.
     pub issuer: CardIssuer, // 'samsung', 'hyundai', etc.
     pub card_type: CardType,

@@ -12,7 +12,6 @@ pub struct Merchant {
 
     pub name: String,
     pub biz_number: String,
-    pub category: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
 }
@@ -20,14 +19,12 @@ pub struct Merchant {
 pub struct CreateMerchantDto {
     pub name: String,
     pub biz_number: String,
-    pub category: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
 }
 pub struct CreateMerchantDtoBuilder {
     pub name: Option<String>,
     pub biz_number: Option<String>,
-    pub category: Option<String>,
     pub address: Option<String>,
     pub phone: Option<String>,
 }
@@ -37,7 +34,6 @@ impl CreateMerchantDtoBuilder {
         Self {
             name: None,
             biz_number: None,
-            category: None,
             address: None,
             phone: None,
         }
@@ -50,11 +46,6 @@ impl CreateMerchantDtoBuilder {
 
     pub fn biz_number(mut self, biz_number: String) -> Self {
         self.biz_number = Some(biz_number);
-        self
-    }
-
-    pub fn category(mut self, category: String) -> Self {
-        self.category = Some(category);
         self
     }
 
@@ -73,7 +64,6 @@ impl CreateMerchantDtoBuilder {
         Ok(CreateMerchantDto {
             name,
             biz_number,
-            category: self.category,
             address: self.address,
             phone: self.phone,
         })

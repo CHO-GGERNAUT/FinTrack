@@ -12,7 +12,6 @@ pub struct Account {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub name: String,
-    pub business_number: Option<String>,
     pub account_type: AccountType,
 }
 

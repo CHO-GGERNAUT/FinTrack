@@ -14,17 +14,3 @@ pub struct User {
     #[serde(skip_serializing)]
     pub password: String,
 }
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct CreateUser {
-//     pub name: String,
-//     pub email: String,
-//     pub password: String,
-// }
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct UpdateUser {
-//     pub name: Option<String>,
-//     pub email: Option<String>,
-//     pub password: Option<String>,
-// }
