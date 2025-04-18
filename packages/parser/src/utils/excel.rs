@@ -1,7 +1,7 @@
-use calamine::{Data, DataType, Range, Reader, Xlsx, open_workbook};
+use bytes::Bytes;
+use calamine::{Data, DataType, Range, Reader, Xlsx, open_workbook_from_rs};
 use chrono::{DateTime, FixedOffset, NaiveDate, NaiveDateTime};
 use std::error::Error;
-
 pub struct ExcelReader {
     // workbook: Xlsx<std::io::BufReader<std::fs::File>>,
     sheets: Vec<Sheet>,
@@ -12,8 +12,9 @@ pub struct Sheet {
 }
 
 impl ExcelReader {
-    pub fn new(path: &str) -> Result<Self, Box<dyn Error>> {
-        let mut workbook: Xlsx<std::io::BufReader<std::fs::File>> = open_workbook(path)?;
+    pub fn new(bytes: &Bytes) -> Result<Self, Box<dyn Error>> {
+        let reader = std::io::Cursor::new(bytes);
+        let mut workbook: Xlsx<_> = open_workbook_from_rs(reader)?;
         let mut sheets = vec![];
         for sheet_name in workbook.sheet_names() {
             tracing::debug!("Sheet name: {}", sheet_name);
@@ -22,6 +23,7 @@ impl ExcelReader {
         }
         Ok(Self { sheets })
     }
+
     pub fn iter(&self) -> std::slice::Iter<Sheet> {
         self.sheets.iter()
     }
@@ -45,10 +47,7 @@ impl Sheet {
     pub fn get_f64_value(&self, row: usize, col: usize) -> Option<f64> {
         self.range
             .get_value((row as u32, col as u32))
-            .and_then(|v| {
-                tracing::debug!("Value: {:?}", v);
-                v.get_float()
-            })
+            .and_then(|v| v.get_float())
     }
 
     pub fn get_int_value(&self, row: usize, col: usize) -> Option<i64> {

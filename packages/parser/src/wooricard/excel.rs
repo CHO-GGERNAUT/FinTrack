@@ -1,45 +1,27 @@
-use std::{collections::HashMap, error::Error};
+use std::error::Error;
 
+use crate::{
+    models::card_transaction::{CardTransaction, CardTransactionType},
+    utils::excel::{ExcelReader, Sheet},
+};
+use bytes::Bytes;
 use calamine::{Data, DataType, Range};
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime};
-use models::{
-    card_transactions::{CardTransaction, TransactionType, from_fields},
-    cards::Card,
-    merchant_import_dto::MerchantImportDto,
-    merchants::Merchant,
-    transaction_import_dto::TransactionImportDto,
-};
 
-pub use crate::base::CardExcelExtractor;
-use crate::utils::excel::{ExcelReader, Sheet};
-
-pub struct WooriCardExcelExtractor {
-    offset: FixedOffset,
-    transactions: Vec<TransactionImportDto>,
-    merchants: Vec<MerchantImportDto>,
-}
-impl CardExcelExtractor for WooriCardExcelExtractor {
-    fn new(offset: FixedOffset, cards: Vec<Card>) -> Self {
-        let mut cards_map = HashMap::new();
-        for card in cards.into_iter() {
-            cards_map.insert(card.last_4_digits, card);
-        }
-        Self {
-            offset,
-            transactions: vec![],
-            merchants: vec![],
-        }
-    }
-
-    fn import(&mut self, file_path: &str) -> Result<(), Box<dyn Error>> {
-        let workbook = ExcelReader::new(file_path)?;
+pub struct WooriCardExcelParser {}
+impl WooriCardExcelParser {
+    pub fn parse(
+        offset: &FixedOffset,
+        bytes: &Bytes,
+    ) -> Result<Vec<CardTransaction>, Box<dyn Error>> {
+        let workbook = ExcelReader::new(bytes)?;
+        let mut transactions = vec![];
         for sheet in workbook.iter() {
             let (ty, start_row) =
                 Self::get_excel_type(sheet.get_range()).ok_or("Excel type not found")?;
-
-            match ty {
+            let res = match ty {
                 ExcelType::PreviousYearSales => {
-                    self.parse_previous_year_sales(sheet, start_row)?;
+                    Self::parse_previous_year_sales(offset, sheet, start_row)?
                 }
                 ExcelType::DomesticTransactions => {
                     tracing::debug!("DomesticTransactions");
@@ -54,27 +36,22 @@ impl CardExcelExtractor for WooriCardExcelExtractor {
                     let start_date = NaiveDate::parse_from_str(start_str, "%Y.%m.%d")?;
                     let end_date = NaiveDate::parse_from_str(end_str, "%Y.%m.%d")?;
 
-                    self.parse_domestic_transactions(sheet, start_row, start_date, end_date)?;
+                    Self::parse_domestic_transactions(
+                        offset, sheet, start_row, start_date, end_date,
+                    )?
                     // Self::parse_domestic_transactions(sheet.get_range(), start_row);
                 }
                 ExcelType::OverseasTransactions => {
-                    self.parse_overseas_transactions(sheet, start_row)?;
+                    Self::parse_overseas_transactions(offset, sheet, start_row)?
                 }
             };
+            transactions.extend(res);
         }
-        Ok(())
-    }
-
-    fn get_merchants(&self) -> Vec<MerchantImportDto> {
-        self.merchants.clone()
-    }
-
-    fn get_transactions(&self) -> Vec<TransactionImportDto> {
-        self.transactions.clone()
+        Ok(transactions)
     }
 }
 
-impl WooriCardExcelExtractor {
+impl WooriCardExcelParser {
     fn get_excel_type(range: &Range<Data>) -> Option<(ExcelType, usize)> {
         // 헤더 텍스트가 있는 셀 찾기
         for row_idx in 0..range.height() {
@@ -94,12 +71,12 @@ impl WooriCardExcelExtractor {
         None
     }
     fn parse_domestic_transactions(
-        &mut self,
+        offset: &FixedOffset,
         sheet: &Sheet,
         start_row: usize,
         start_date: NaiveDate,
         end_date: NaiveDate,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<Vec<CardTransaction>, Box<dyn Error>> {
         const DATE_COL: usize = 0; // 매출일자
         const CARD_COL: usize = 2; // 이용카드
         const MERCHANT_COL: usize = 3; // 가맹점명
@@ -108,7 +85,7 @@ impl WooriCardExcelExtractor {
         const INSTALLMENT_TYPE_COL: usize = 6; // 할부개월
         const AMOUNT_COL: usize = 7; // 매출금액
         const CANCEL_COL: usize = 8; // 취소금액
-        let kst = FixedOffset::east_opt(9 * 3600).unwrap();
+        let mut transactions = vec![];
         for i in start_row..sheet.get_height() {
             let date = match sheet.get_string_value(i, DATE_COL) {
                 Some(date) => {
@@ -137,14 +114,14 @@ impl WooriCardExcelExtractor {
                 }
             };
             let approved_at = match date {
-                Ok(date) => date,
+                Ok(date) => DateTime::<FixedOffset>::from_naive_utc_and_offset(date, *offset),
                 Err(e) => {
                     tracing::debug!("Row({i}): date error {e:?}");
                     continue;
                 }
             };
 
-            let card_num = match sheet.get_string_value(i, CARD_COL) {
+            let card_number = match sheet.get_string_value(i, CARD_COL) {
                 Some(card) => card,
                 None => {
                     tracing::debug!("Row({i}): card number not found");
@@ -182,9 +159,9 @@ impl WooriCardExcelExtractor {
                 Some(val) => {
                     if val.contains("일시불") {
                         if amount < 0 {
-                            TransactionType::Refund
+                            CardTransactionType::Refund
                         } else {
-                            TransactionType::LumpSum
+                            CardTransactionType::LumpSum
                         }
                     } else {
                         let installment = match sheet.get_int_value(i, INSTALLMENT_TYPE_COL) {
@@ -194,7 +171,7 @@ impl WooriCardExcelExtractor {
                                 continue;
                             }
                         };
-                        TransactionType::Installment(installment)
+                        CardTransactionType::Installment(installment)
                     }
                 }
                 None => {
@@ -217,41 +194,35 @@ impl WooriCardExcelExtractor {
                     continue;
                 }
             };
-            let approved_at = DateTime::<FixedOffset>::from_naive_utc_and_offset(approved_at, kst);
 
-            self.transactions.push(TransactionImportDto::new(
-                amount as i32,
-                approved_at.to_utc(),
-                None,
-                card_num.to_string(),
-                business_number.to_string(),
-                transaction_type,
-            ));
-
-            self.merchants.push(MerchantImportDto::new(
+            transactions.push(CardTransaction {
                 merchant,
-                business_number.to_string(),
-            ));
+                business_number,
+                amount,
+                card_number,
+                approved_at,
+                r#type: transaction_type,
+            });
         }
-        Ok(())
+        Ok(transactions)
     }
 
     fn parse_overseas_transactions(
-        &mut self,
+        _offset: &FixedOffset,
         _sheet: &Sheet,
         _start_row: usize,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<Vec<CardTransaction>, Box<dyn Error>> {
         unimplemented!()
     }
 
     fn parse_previous_year_sales(
-        &mut self,
+        offset: &FixedOffset,
         sheet: &Sheet,
         start_row: usize,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<Vec<CardTransaction>, Box<dyn Error>> {
         // Define column indices for Woori card Excel format
         // These indices should be adjusted based on the actual Woori card Excel format
-
+        let mut transactions = vec![];
         const DATE_COL: usize = 1; // 매출일자
         const CARD_COL: usize = 2; // 이용카드
         const AMOUNT_COL: usize = 3; // 매출금액
@@ -261,7 +232,7 @@ impl WooriCardExcelExtractor {
         const BUSINESS_NUMBER_COL: usize = 13; // 사업자번호
         static DATE_FORMAT: &str = "%Y/%m/%d";
         for i in start_row..sheet.get_height() {
-            let approved_at = match sheet.get_date_time(i, DATE_COL, DATE_FORMAT, self.offset) {
+            let approved_at = match sheet.get_date_time(i, DATE_COL, DATE_FORMAT, *offset) {
                 Some(date) => date,
                 None => {
                     tracing::debug!("Row({i}): date not found");
@@ -269,7 +240,7 @@ impl WooriCardExcelExtractor {
                 }
             };
 
-            let card_num = match sheet.get_string_value(i, CARD_COL) {
+            let card_number = match sheet.get_string_value(i, CARD_COL) {
                 Some(card) => card,
                 None => {
                     tracing::debug!("Row({i}): card number not found");
@@ -289,7 +260,7 @@ impl WooriCardExcelExtractor {
             let transaction_type = match sheet.get_string_value(i, TRANSACTION_TYPE_COL) {
                 Some(val) => {
                     if val.contains("취소") {
-                        TransactionType::Refund
+                        CardTransactionType::Refund
                     } else if val.contains("할부") {
                         let installment = match sheet.get_int_value(i, INSTALLMENT_TYPE_COL) {
                             Some(inst) => inst as u8,
@@ -298,9 +269,9 @@ impl WooriCardExcelExtractor {
                                 continue;
                             }
                         };
-                        TransactionType::Installment(installment)
+                        CardTransactionType::Installment(installment)
                     } else {
-                        TransactionType::LumpSum
+                        CardTransactionType::LumpSum
                     }
                 }
                 None => {
@@ -323,21 +294,16 @@ impl WooriCardExcelExtractor {
                     continue;
                 }
             };
-            self.transactions.push(TransactionImportDto::new(
-                amount as i32,
-                approved_at.to_utc(),
-                None,
-                card_num.to_string(),
-                business_number.to_string(),
-                transaction_type,
-            ));
-
-            self.merchants.push(MerchantImportDto::new(
+            transactions.push(CardTransaction {
                 merchant,
-                business_number.to_string(),
-            ));
+                business_number,
+                amount,
+                card_number,
+                approved_at,
+                r#type: transaction_type,
+            });
         }
-        Ok(())
+        Ok(transactions)
     }
 }
 
