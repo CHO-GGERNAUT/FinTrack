@@ -1,8 +1,7 @@
-pub mod card_transactions;
-pub mod cards;
-pub mod categories;
-pub mod merchants;
-pub mod users;
+pub mod account;
+pub mod card;
+pub mod category;
+pub mod user;
 
-pub mod merchant_import_dto;
-pub mod transaction_import_dto;
+pub mod merchant;
+pub mod transaction;
