@@ -1,10 +1,11 @@
-use std::sync::Arc;
-
 mod application {
     pub mod services;
     pub mod usecases;
 }
 mod domain {
+    pub mod auth {
+        pub mod claims;
+    }
     pub mod entities;
     pub mod enums;
     pub mod repositories;
@@ -20,7 +21,12 @@ mod presentation {
 }
 mod utils;
 
-use infrastructure::{config::Config, db::create_pool};
+use axum::middleware;
+use infrastructure::{
+    config::Config,
+    db::{ArcPgPool, create_pool},
+    middleware::auth_middleware::auth_middleware,
+};
 
 #[tokio::main]
 async fn main() {
@@ -34,7 +40,7 @@ async fn main() {
         .try_init();
 
     let pool = create_pool();
-    let pool: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(pool);
+    let pool: ArcPgPool = std::sync::Arc::new(pool);
 
     #[cfg(feature = "rest")]
     {
@@ -45,7 +51,9 @@ async fn main() {
             .unwrap();
 
         println!("Server started on {:?}", listener.local_addr().unwrap());
-        let app = router().layer(Extension(pool));
+        let app = router()
+            .layer(Extension(pool))
+            .layer(middleware::from_fn(auth_middleware));
 
         match axum::serve(listener, app).await {
             Ok(_) => {

@@ -11,22 +11,26 @@ sqlx = { workspace = true, features = [
     "json",
     "migrate",
 ] }
-uuid.workspace = true
-models.workspace = true
+uuid = { workspace = true }
+models = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 tokio = { version = "1", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+
 chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+
 anyhow = { version = "1.0" }
 cookie = "0.18.1"
 jsonwebtoken = "9.3.1"
 
 axum = { version = "0.8.3", optional = true }
 tonic = { version = "0.13.0", optional = true }
+bcrypt = "0.17.0"
 
 [features]
 default = ["rest"]

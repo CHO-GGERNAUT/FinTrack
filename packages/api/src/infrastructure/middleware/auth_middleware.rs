@@ -6,16 +6,10 @@ use axum::{
 };
 use cookie::Cookie;
 use jsonwebtoken::{DecodingKey, Validation, decode};
-use serde::{Deserialize, Serialize};
+
+use crate::domain::auth::claims::Claims;
 
 use super::super::config::Config;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Claims {
-    pub sub: String,
-    pub exp: usize,
-    pub role: String,
-}
 
 pub async fn auth_middleware(mut request: Request, next: Next) -> Result<Response, StatusCode> {
     let mut token = request

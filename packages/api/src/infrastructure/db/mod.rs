@@ -11,3 +11,6 @@ pub fn create_pool() -> PgPool {
 
     pool
 }
+pub type ArcPgPool = std::sync::Arc<sqlx::PgPool>;
+
+pub mod user_repository;
