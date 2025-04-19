@@ -1,17 +1,22 @@
+use std::sync::Arc;
+
 use axum::{
+    Extension,
     extract::Request,
     http::{StatusCode, header},
     middleware::Next,
     response::Response,
 };
 use cookie::Cookie;
-use jsonwebtoken::{DecodingKey, Validation, decode};
 
-use crate::domain::auth::claims::Claims;
+use crate::application::{dto::Claims, services::JwtService};
 
-use super::super::config::Config;
-
-pub async fn auth_middleware(mut request: Request, next: Next) -> Result<Response, StatusCode> {
+pub async fn auth_middleware(
+    Extension(jwt): Extension<Arc<dyn JwtService>>,
+    mut request: Request,
+    next: Next,
+) -> Result<Response, StatusCode> {
+    tracing::debug!("Auth middleware triggered");
     let mut token = request
         .headers()
         .get(header::AUTHORIZATION)
@@ -37,18 +42,13 @@ pub async fn auth_middleware(mut request: Request, next: Next) -> Result<Respons
         }
     }
     if let Some(token) = token {
-        let config = Config::get();
-        let jwt_secret = config.jwt_secret.as_bytes();
-        let token_data = decode::<Claims>(
-            &token,
-            &DecodingKey::from_secret(jwt_secret),
-            &Validation::default(),
-        )
-        .map_err(|_| StatusCode::UNAUTHORIZED)?;
-        let claims = token_data.claims;
-
-        request.extensions_mut().insert(Some(claims));
+        if let Ok(token_data) = jwt.verify(&token) {
+            tracing::debug!("Token verified: {:?}", token_data.claims);
+            request.extensions_mut().insert(Some(token_data.claims));
+            return Ok(next.run(request).await);
+        }
     }
-
+    tracing::debug!("Token verification failed");
+    request.extensions_mut().insert(None::<Claims>);
     Ok(next.run(request).await)
 }

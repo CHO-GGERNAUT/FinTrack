@@ -1,6 +1,15 @@
+pub mod repositories {
+    mod card_repository;
+    pub use card_repository::CardRepositoryPostgres;
+    mod user_repository;
+    pub use user_repository::UserRepositoryPostgres;
+}
+pub mod schema;
+
 use sqlx::postgres::{PgPool, PgPoolOptions};
 
 use super::config::Config;
+pub type ArcPgPool = std::sync::Arc<sqlx::PgPool>;
 
 pub fn create_pool() -> PgPool {
     let config = Config::get();
@@ -11,6 +20,3 @@ pub fn create_pool() -> PgPool {
 
     pool
 }
-pub type ArcPgPool = std::sync::Arc<sqlx::PgPool>;
-
-pub mod user_repository;

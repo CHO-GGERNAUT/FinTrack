@@ -1,31 +1,19 @@
-mod application {
-    pub mod services;
-    pub mod usecases;
-}
-mod domain {
-    pub mod auth {
-        pub mod claims;
-    }
-    pub mod entities;
-    pub mod enums;
-    pub mod repositories;
-}
-mod infrastructure {
-    pub mod config;
-    pub mod db;
-    pub mod middleware;
-}
-mod presentation {
-    pub mod grpc;
-    pub mod rest;
-}
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
+pub mod presentation;
+
 mod utils;
 
+use std::sync::Arc;
+
+use application::services::JwtService;
 use axum::middleware;
 use infrastructure::{
     config::Config,
     db::{ArcPgPool, create_pool},
     middleware::auth_middleware::auth_middleware,
+    services::jwt::JwtServiceImpl,
 };
 
 #[tokio::main]
@@ -45,15 +33,17 @@ async fn main() {
     #[cfg(feature = "rest")]
     {
         use axum::Extension;
-        use presentation::rest::router;
+        use presentation::rest::routes;
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
             .await
             .unwrap();
+        let jwt_service: Arc<dyn JwtService> = Arc::new(JwtServiceImpl::new(&config.jwt_secret));
 
         println!("Server started on {:?}", listener.local_addr().unwrap());
-        let app = router()
+        let app: axum::Router = routes()
+            .layer(middleware::from_fn(auth_middleware))
             .layer(Extension(pool))
-            .layer(middleware::from_fn(auth_middleware));
+            .layer(Extension(jwt_service));
 
         match axum::serve(listener, app).await {
             Ok(_) => {
@@ -68,5 +58,4 @@ async fn main() {
     {
         unimplemented!("gRPC server not implemented yet");
     }
-    // Initialize API router
 }

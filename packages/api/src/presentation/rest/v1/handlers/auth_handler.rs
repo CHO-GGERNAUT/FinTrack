@@ -3,59 +3,51 @@ use axum::{
     http::{StatusCode, header::SET_COOKIE},
     response::{IntoResponse, Response},
 };
-use models::dto::user::{CreateUserRequest, LoginRequest};
 
 use crate::{
     application::{
-        services::jwt_service::JwtService,
-        usecases::user::{CreateUserUsecase, LoginUserUsecase},
+        dto::CreateUserInput,
+        usecases::user::{CreateUserUsecase, IssueTokenUsecase},
     },
-    domain::entities::user::User,
     infrastructure::{
         config::Config,
-        db::{ArcPgPool, user_repository::UserRepositoryPostgres},
+        db::{ArcPgPool, repositories::UserRepositoryPostgres},
+        services::jwt::JwtServiceImpl,
     },
+    presentation::dto::user::{CreateUserRequest, CreateUserResponse, LoginRequest},
 };
 
 pub async fn register_handler(
     Extension(pool): Extension<ArcPgPool>,
     Json(req): Json<CreateUserRequest>,
-) -> Result<(), (StatusCode, String)> {
+) -> Result<Json<CreateUserResponse>, (StatusCode, String)> {
     let hashed = bcrypt::hash(req.password, 10)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    let user = User {
-        id: uuid::Uuid::new_v4(),
-        name: req.name,
-        email: req.email,
-        password: hashed,
-    };
-    let usecase = CreateUserUsecase {
-        repo: UserRepositoryPostgres { pool },
-    };
-    usecase
-        .execute(user)
+    let usecase = CreateUserUsecase::new(UserRepositoryPostgres::new(pool));
+    let res = usecase
+        .execute(CreateUserInput {
+            name: req.name,
+            email: req.email,
+            password: hashed,
+        })
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(res.into()))
 }
 
 pub async fn login_handler(
     Extension(pool): Extension<ArcPgPool>,
     Json(req): Json<LoginRequest>,
 ) -> Result<Response, (StatusCode, String)> {
-    let usecase = LoginUserUsecase {
-        repo: UserRepositoryPostgres { pool },
-    };
+    let jwt = JwtServiceImpl::new(&Config::get().jwt_secret);
+    let usecase = IssueTokenUsecase::new(UserRepositoryPostgres::new(pool), jwt);
 
-    let user = usecase
-        .execute(&req.email, &req.password)
+    let output = usecase
+        .execute(req.into())
         .await
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
 
-    let config = Config::get();
-    let jwt_service = JwtService::new(config.jwt_secret.clone());
-    let token = jwt_service.generate(&user.id.to_string()).unwrap();
-
-    let cookie = cookie::CookieBuilder::new("auth_token", token)
+    let cookie = cookie::CookieBuilder::new("auth_token", output.token)
         .path("/")
         .http_only(true)
         .same_site(cookie::SameSite::Lax)
