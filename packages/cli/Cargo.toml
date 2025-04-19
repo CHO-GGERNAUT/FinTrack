@@ -6,7 +6,6 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-models.workspace = true
 parser.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true

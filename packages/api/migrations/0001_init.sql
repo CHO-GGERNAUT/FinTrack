@@ -1,7 +1,7 @@
 CREATE TABLE "user" (
     id UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
@@ -25,8 +25,8 @@ CREATE TYPE card_type AS ENUM (
 CREATE TABLE account (
     id UUID PRIMARY KEY,
     owner_id UUID NOT NULL REFERENCES "user"(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     name TEXT NOT NULL,
     account_type TEXT CHECK (account_type IN ('card', 'bank')) NOT NULL
@@ -34,8 +34,8 @@ CREATE TABLE account (
 
 CREATE TABLE card (
     account_id UUID PRIMARY KEY REFERENCES account(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     card_number_last4 CHAR(4) NOT NULL,
     encrypted_card_number BYTEA NOT NULL,
@@ -50,8 +50,8 @@ CREATE TABLE card (
 
 CREATE TABLE bank (
     account_id UUID PRIMARY KEY REFERENCES account(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
 
     name TEXT,
@@ -59,8 +59,8 @@ CREATE TABLE bank (
 );
 CREATE TABLE category (
     id UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     name TEXT NOT NULL,
     path LTREE NOT NULL UNIQUE
@@ -70,8 +70,8 @@ CREATE TABLE transaction (
     id UUID PRIMARY KEY,
     account_id UUID NOT NULL REFERENCES account(id),
     category_id UUID REFERENCES category(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     amount NUMERIC NOT NULL,
     approved_at TIMESTAMPTZ NOT NULL,
@@ -82,8 +82,8 @@ CREATE TABLE transaction (
 -- 사업자/가맹점
 CREATE TABLE merchant (
     id UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
 
     name TEXT NOT NULL,

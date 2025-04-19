@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/api", "packages/cli", "packages/parser", "packages/models"]
+members = ["packages/api", "packages/cli", "packages/parser"]
 resolver = "2"
 
 [workspace.package]
@@ -21,7 +21,8 @@ sqlx = { version = "0.8.3", features = [
     "json",
     "macros",
     "derive",
+    "rust_decimal",
 ] }
 uuid = { version = "1.3", features = ["serde", "v4"] }
 parser = { path = "packages/parser" }
-models = { path = "packages/models" }
+rust_decimal = "1.37.1"
