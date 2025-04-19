@@ -8,7 +8,7 @@ use cookie::Cookie;
 use jsonwebtoken::{DecodingKey, Validation, decode};
 use serde::{Deserialize, Serialize};
 
-use crate::config::Config;
+use super::super::config::Config;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
@@ -18,8 +18,7 @@ pub struct Claims {
 }
 
 pub async fn auth_middleware(mut request: Request, next: Next) -> Result<Response, StatusCode> {
-    let mut token = None;
-    token = request
+    let mut token = request
         .headers()
         .get(header::AUTHORIZATION)
         .and_then(|header| header.to_str().ok())

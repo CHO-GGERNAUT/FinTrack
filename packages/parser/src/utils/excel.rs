@@ -118,10 +118,9 @@ mod test {
                 43831.5,
             ),
         ];
-
+        let offset = FixedOffset::east_opt(0).unwrap();
         for (date, expected) in test_cases {
-            let date =
-                DateTime::<FixedOffset>::from_naive_utc_and_offset(date, FixedOffset::east(0));
+            let date = DateTime::<FixedOffset>::from_naive_utc_and_offset(date, offset);
             let excel_date = convert_to_excel_epoch(date);
             println!("{} -> Excel: {}, Expected: {}", date, excel_date, expected);
             assert!((excel_date - expected).abs() < 0.00001);

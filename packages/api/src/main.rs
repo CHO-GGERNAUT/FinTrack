@@ -1,17 +1,26 @@
-use core::infrastructure::db::create_pool;
 use std::sync::Arc;
 
-use config::Config;
-
-mod config;
-mod rest;
-mod core {
-    pub mod application;
-    pub mod domain;
-    pub mod infrastructure;
+mod application {
+    pub mod services;
+    pub mod usecases;
 }
-
+mod domain {
+    pub mod entities;
+    pub mod enums;
+    pub mod repositories;
+}
+mod infrastructure {
+    pub mod config;
+    pub mod db;
+    pub mod middleware;
+}
+mod presentation {
+    pub mod grpc;
+    pub mod rest;
+}
 mod utils;
+
+use infrastructure::{config::Config, db::create_pool};
 
 #[tokio::main]
 async fn main() {
@@ -30,7 +39,7 @@ async fn main() {
     #[cfg(feature = "rest")]
     {
         use axum::Extension;
-        use rest::router;
+        use presentation::rest::router;
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
             .await
             .unwrap();
