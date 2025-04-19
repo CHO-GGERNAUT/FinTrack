@@ -8,7 +8,7 @@ use models::dto::user::{CreateUserRequest, LoginRequest};
 use crate::{
     application::{
         services::jwt_service::JwtService,
-        usecases::{create_user::CreateUserUsecase, login_user::LoginUserUsecase},
+        usecases::user::{CreateUserUsecase, LoginUserUsecase},
     },
     domain::entities::user::User,
     infrastructure::{
