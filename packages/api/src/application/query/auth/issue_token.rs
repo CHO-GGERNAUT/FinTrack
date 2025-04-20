@@ -1,8 +1,7 @@
 use crate::{
     application::{
         dto::{Claims, IssueTokenInput, IssueTokenOutput},
-        error::ApplicationError,
-        error::Result,
+        errors::ApplicationError,
         services::JwtService,
     },
     domain::repositories::UserRepository,
@@ -19,7 +18,10 @@ impl<R: UserRepository, J: JwtService> IssueTokenUsecase<R, J> {
         Self { repo, jwt }
     }
 
-    pub async fn execute(mut self, input: IssueTokenInput) -> Result<IssueTokenOutput> {
+    pub async fn execute(
+        mut self,
+        input: IssueTokenInput,
+    ) -> Result<IssueTokenOutput, ApplicationError> {
         let user = self.repo.find_by_email(&input.email).await?;
 
         if !self.verify_password(&user.password, &input.password) {

@@ -1,11 +1,14 @@
 use crate::{
     domain::{
-        errors::{DomainError, Result, card::CardError},
+        errors::{DomainError, UowError},
         unit_of_works::{CardUnitOfWork, UnitOfWork},
     },
-    infrastructure::db::{
-        ArcPgPool,
-        repositories::{AccountRepositoryPostgres, CardRepositoryPostgres},
+    infrastructure::{
+        db::{
+            ArcPgPool,
+            repositories::{AccountRepositoryPostgres, CardRepositoryPostgres},
+        },
+        errors::InfraError,
     },
 };
 use async_trait::async_trait;
@@ -16,10 +19,10 @@ pub struct CardUnitOfWorkPostgres {
 }
 
 impl CardUnitOfWorkPostgres {
-    pub async fn new(pool: ArcPgPool) -> Result<Self> {
+    pub async fn new(pool: ArcPgPool) -> Result<Self, InfraError> {
         let tx: Transaction<'static, Postgres> = pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
-            DomainError::CardError(CardError::CardNotFound)
+            InfraError::DatabaseError(e.to_string())
         })?;
 
         Ok(Self { tx })
@@ -41,18 +44,18 @@ impl CardUnitOfWork for CardUnitOfWorkPostgres {
 
 #[async_trait]
 impl UnitOfWork for CardUnitOfWorkPostgres {
-    async fn commit(self) -> Result<()> {
+    async fn commit(self) -> Result<(), DomainError> {
         self.tx.commit().await.map_err(|e| {
             tracing::error!("Failed to commit transaction: {}", e);
-            DomainError::CardError(CardError::CardNotFound)
+            UowError::CommitError(e.to_string())
         })?;
         Ok(())
     }
 
-    async fn rollback(self) -> Result<()> {
+    async fn rollback(self) -> Result<(), DomainError> {
         self.tx.rollback().await.map_err(|e| {
             tracing::error!("Failed to commit transaction: {}", e);
-            DomainError::CardError(CardError::CardNotFound)
+            UowError::RollbackError(e.to_string())
         })?;
         Ok(())
     }

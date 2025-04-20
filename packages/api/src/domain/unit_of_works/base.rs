@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 
-use crate::domain::errors::Result;
+use crate::domain::errors::DomainError;
 
 #[async_trait]
 pub trait UnitOfWork {
-    async fn commit(self) -> Result<()>;
-    async fn rollback(self) -> Result<()>;
+    async fn commit(self) -> Result<(), DomainError>;
+    async fn rollback(self) -> Result<(), DomainError>;
 }

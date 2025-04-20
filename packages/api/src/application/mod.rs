@@ -7,5 +7,4 @@ pub mod services {
     pub use jwt_service::JwtService;
 }
 
-mod error;
-pub(super) use error::*;
+pub mod errors;

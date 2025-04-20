@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use sqlx::{Postgres, Transaction};
 
 use crate::domain::{
-    errors::{DomainError, Result},
+    errors::{DomainError, UowError},
     unit_of_works::UnitOfWork,
 };
 
@@ -17,21 +17,21 @@ impl UnitOfWorkPostgres {
 
 #[async_trait]
 impl UnitOfWork for UnitOfWorkPostgres {
-    async fn commit(mut self) -> Result<()> {
+    async fn commit(mut self) -> Result<(), DomainError> {
         if let Some(tx) = self.tx.take() {
             tx.commit()
                 .await
-                .map_err(|e| DomainError::CommonError(e.to_string()))
+                .map_err(|e| UowError::CommitError(e.to_string()).into())
         } else {
             Ok(())
         }
     }
 
-    async fn rollback(mut self) -> Result<()> {
+    async fn rollback(mut self) -> Result<(), DomainError> {
         if let Some(tx) = self.tx.take() {
             tx.rollback()
                 .await
-                .map_err(|e| DomainError::CommonError(e.to_string()))
+                .map_err(|e| UowError::RollbackError(e.to_string()).into())
         } else {
             Ok(())
         }

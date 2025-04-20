@@ -4,7 +4,7 @@ use sqlx::{Postgres, Transaction};
 use crate::{
     domain::{
         entities::User,
-        errors::{DomainError, Result, user::UserError},
+        errors::{DomainError, UserError},
         repositories::UserRepository,
     },
     infrastructure::db::{ArcPgPool, schema::UserRow},
@@ -21,7 +21,7 @@ impl<'a> UserRepositoryPostgres<'a> {
 
 #[async_trait]
 impl<'a> UserRepository for UserRepositoryPostgres<'a> {
-    async fn create(&mut self, user: &User) -> Result<User> {
+    async fn create(&mut self, user: &User) -> Result<User, DomainError> {
         let tx = self.tx.as_mut();
         let result = sqlx::query_as!(
             UserRow,
@@ -36,23 +36,16 @@ impl<'a> UserRepository for UserRepositoryPostgres<'a> {
             user.password,
         )
         .fetch_one(tx)
-        .await;
+        .await
+        .map_err(|e| {
+            tracing::error!("DB error: {}", e);
+            UserError::Duplicate
+        })?;
 
-        match result {
-            Ok(row) => Ok(row.into()),
-            Err(e) => {
-                if let Some(db_err) = e.as_database_error() {
-                    if db_err.constraint() == Some("user_email_key") {
-                        return Err(DomainError::UserError(UserError::EmailAlreadyExists));
-                    }
-                }
-                tracing::error!("DB error: {}", e);
-                Err(DomainError::UserError(UserError::UserNotCreated))
-            }
-        }
+        Ok(result.into())
     }
 
-    async fn find_by_email(&mut self, email: &str) -> Result<User> {
+    async fn find_by_email(&mut self, email: &str) -> Result<User, DomainError> {
         let tx = self.tx.as_mut();
 
         sqlx::query_as!(UserRow, r#"SELECT * FROM "user" WHERE email = $1"#, email)
@@ -60,10 +53,10 @@ impl<'a> UserRepository for UserRepositoryPostgres<'a> {
             .await
             .map_err(|e| {
                 tracing::error!("DB error: {}", e);
-                DomainError::UserError(UserError::UserNotFound)
+                UserError::NotFound
             })?
             .map(Into::into)
-            .ok_or(DomainError::UserError(UserError::UserNotFound))
+            .ok_or(UserError::NotFound.into())
     }
 }
 
@@ -79,29 +72,29 @@ impl UserRepositoryPostgresPool {
 
 #[async_trait]
 impl UserRepository for UserRepositoryPostgresPool {
-    async fn create(&mut self, user: &User) -> Result<User> {
+    async fn create(&mut self, user: &User) -> Result<User, DomainError> {
         let mut tx = self.pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
-            DomainError::UserError(UserError::EmailAlreadyExists)
+            UserError::Unknown(e.to_string())
         })?;
         let mut repo = UserRepositoryPostgres::new(&mut tx);
         let result = repo.create(user).await?;
         tx.commit().await.map_err(|e| {
             tracing::error!("Failed to commit transaction: {}", e);
-            DomainError::UserError(UserError::EmailAlreadyExists)
+            UserError::Unknown(e.to_string())
         })?;
         Ok(result)
     }
-    async fn find_by_email(&mut self, email: &str) -> Result<User> {
+    async fn find_by_email(&mut self, email: &str) -> Result<User, DomainError> {
         let mut tx = self.pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
-            DomainError::UserError(UserError::EmailAlreadyExists)
+            UserError::Unknown(e.to_string())
         })?;
         let mut repo = UserRepositoryPostgres::new(&mut tx);
         let result = repo.find_by_email(email).await?;
         tx.commit().await.map_err(|e| {
             tracing::error!("Failed to commit transaction: {}", e);
-            DomainError::UserError(UserError::EmailAlreadyExists)
+            UserError::Unknown(e.to_string())
         })?;
         Ok(result)
     }

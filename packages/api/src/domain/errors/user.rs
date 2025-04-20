@@ -1,8 +1,12 @@
-#[derive(Debug)]
+use thiserror::Error;
+#[derive(Debug, Error)]
 pub enum UserError {
-    EmailAlreadyExists,
-    UserNotFound,
-    InvalidPassword,
-    InvalidUserStatus,
-    UserNotCreated,
+    #[error("User already exists")]
+    Duplicate,
+    #[error("Invalid email")]
+    InvalidEmail,
+    #[error("User not found")]
+    NotFound,
+    #[error("unknown error {0}")]
+    Unknown(String),
 }

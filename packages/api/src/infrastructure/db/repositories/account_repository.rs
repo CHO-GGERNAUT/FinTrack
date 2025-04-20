@@ -1,7 +1,7 @@
 use crate::{
     domain::{
         entities::Account,
-        errors::{DomainError, Result, account::AccountError},
+        errors::{AccountError, DomainError},
         repositories::AccountRepository,
     },
     infrastructure::db::schema::{AccountRow, AccountTypeDb},
@@ -22,7 +22,7 @@ impl<'a> AccountRepositoryPostgres<'a> {
 
 #[async_trait]
 impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
-    async fn create(&mut self, account: &Account) -> Result<Account> {
+    async fn create(&mut self, account: &Account) -> Result<Account, DomainError> {
         let tx = self.tx.as_mut();
 
         let row = sqlx::query_as!(
@@ -46,13 +46,13 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
         .await
         .map_err(|e| {
             tracing::error!("DB error: {}", e);
-            DomainError::AccountError(AccountError::DuplicateAccount)
+            AccountError::Duplicate
         })?;
 
         Ok(row.into())
     }
 
-    async fn delete(&mut self, account_id: Uuid) -> Result<()> {
+    async fn delete(&mut self, account_id: Uuid) -> Result<(), DomainError> {
         let tx = self.tx.as_mut();
 
         sqlx::query!(
@@ -66,13 +66,13 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
         .await
         .map_err(|e| {
             tracing::error!("DB error: {}", e);
-            DomainError::AccountError(AccountError::NotFound)
+            AccountError::NotFound
         })?;
 
         Ok(())
     }
 
-    async fn find_by_id(&mut self, account_id: Uuid) -> Result<Account> {
+    async fn find_by_id(&mut self, account_id: Uuid) -> Result<Account, DomainError> {
         let tx = self.tx.as_mut();
 
         let row = sqlx::query_as!(
@@ -96,9 +96,9 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
         .await
         .map_err(|e| {
             tracing::error!("DB error: {}", e);
-            DomainError::AccountError(AccountError::NotFound)
+            AccountError::NotFound
         })?
-        .ok_or(DomainError::AccountError(AccountError::NotFound))?;
+        .ok_or(AccountError::NotFound)?;
 
         Ok(row.into())
     }

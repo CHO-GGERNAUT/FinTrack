@@ -1,7 +1,7 @@
 use crate::{
     application::{
         dto::{CreateUserInput, CreateUserOutput},
-        error::{ApplicationError, Result},
+        errors::ApplicationError,
     },
     domain::{entities::User, repositories::UserRepository},
     utils::crypto::hash_password,
@@ -17,7 +17,10 @@ impl<R: UserRepository> CreateUserUsecase<R> {
         Self { repo }
     }
 
-    pub async fn execute(mut self, input: CreateUserInput) -> Result<CreateUserOutput> {
+    pub async fn execute(
+        mut self,
+        input: CreateUserInput,
+    ) -> Result<CreateUserOutput, ApplicationError> {
         let hashed = hash_password(&input.password)
             .map_err(|e| ApplicationError::HashError(format!("Failed to hash password: {}", e)))?;
         let user = User {

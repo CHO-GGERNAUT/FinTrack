@@ -1,7 +1,7 @@
 use crate::{
     application::{
-        ApplicationError, Result,
         dto::{DeleteCardInput, DeleteCardOutput},
+        errors::ApplicationError,
     },
     domain::{
         repositories::{AccountRepository, CardRepository},
@@ -17,7 +17,10 @@ impl<U: CardUnitOfWork> DeleteCardUsecase<U> {
     pub fn new(uow: U) -> Self {
         Self { uow }
     }
-    pub async fn execute(mut self, input: DeleteCardInput) -> Result<DeleteCardOutput> {
+    pub async fn execute(
+        mut self,
+        input: DeleteCardInput,
+    ) -> Result<DeleteCardOutput, ApplicationError> {
         {
             let mut account_repo = self.uow.account_repo();
             let account = account_repo.find_by_id(input.account_id).await?;

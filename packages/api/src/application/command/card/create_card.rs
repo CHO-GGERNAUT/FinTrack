@@ -1,7 +1,7 @@
 use crate::{
     application::{
-        Result,
         dto::{CreateCardInput, CreateCardOutput},
+        errors::ApplicationError,
     },
     domain::{
         entities::{Account, Card},
@@ -21,7 +21,10 @@ impl<U: CardUnitOfWork> CreateCardUsecase<U> {
     pub fn new(uow: U) -> Self {
         Self { uow }
     }
-    pub async fn execute(mut self, input: CreateCardInput) -> Result<CreateCardOutput> {
+    pub async fn execute(
+        mut self,
+        input: CreateCardInput,
+    ) -> Result<CreateCardOutput, ApplicationError> {
         let now = Utc::now();
         let account_id = Uuid::new_v4();
 

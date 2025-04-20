@@ -1,6 +1,5 @@
 use crate::domain::errors::DomainError;
 
-pub type Result<T> = std::result::Result<T, ApplicationError>;
 pub enum ApplicationError {
     RepositoryError(String),
     ValidationError(String),
@@ -23,12 +22,6 @@ impl std::fmt::Display for ApplicationError {
 
 impl From<DomainError> for ApplicationError {
     fn from(e: DomainError) -> Self {
-        ApplicationError::DomainError(e.to_string())
-    }
-}
-
-impl From<anyhow::Error> for ApplicationError {
-    fn from(e: anyhow::Error) -> Self {
         ApplicationError::DomainError(e.to_string())
     }
 }
