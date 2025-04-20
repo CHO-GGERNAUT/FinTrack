@@ -1,5 +1,4 @@
-use crate::application::error::Result;
-
+use anyhow::Result;
 use jsonwebtoken::TokenData;
 
 use crate::application::dto::Claims;

@@ -5,7 +5,7 @@ use crate::{
         error::Result,
         services::JwtService,
     },
-    domain::repositories::user_repository::UserRepository,
+    domain::repositories::UserRepository,
 };
 
 #[derive(Clone)]
@@ -19,10 +19,8 @@ impl<R: UserRepository, J: JwtService> IssueTokenUsecase<R, J> {
         Self { repo, jwt }
     }
 
-    pub async fn execute(&self, input: IssueTokenInput) -> Result<IssueTokenOutput> {
-        let user = self.repo.find_by_email(&input.email).await.map_err(|e| {
-            ApplicationError::RepositoryError(format!("Failed to find user: {}", e))
-        })?;
+    pub async fn execute(mut self, input: IssueTokenInput) -> Result<IssueTokenOutput> {
+        let user = self.repo.find_by_email(&input.email).await?;
 
         if !self.verify_password(&user.password, &input.password) {
             return Err(ApplicationError::ValidationError(
@@ -36,7 +34,10 @@ impl<R: UserRepository, J: JwtService> IssueTokenUsecase<R, J> {
             exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
         };
 
-        let token = self.jwt.generate(&claims)?;
+        let token = self
+            .jwt
+            .generate(&claims)
+            .map_err(|e| ApplicationError::JwtError(format!("Failed to generate token: {}", e)))?;
 
         Ok(IssueTokenOutput {
             token,

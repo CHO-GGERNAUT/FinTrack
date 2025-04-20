@@ -4,7 +4,7 @@ use sqlx::prelude::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Category {
+pub struct CategoryRow {
     pub id: Uuid,
 
     pub created_at: DateTime<Utc>,

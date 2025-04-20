@@ -1,7 +1,5 @@
 pub mod entities;
 pub mod enums;
-
+pub mod errors;
 pub mod repositories;
-
-mod error;
-pub use error::*;
+pub mod unit_of_works;

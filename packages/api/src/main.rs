@@ -11,7 +11,7 @@ use application::services::JwtService;
 use axum::middleware;
 use infrastructure::{
     config::Config,
-    db::{ArcPgPool, create_pool},
+    db::{ArcPgPool, create_pool::create_pool},
     middleware::auth_middleware::auth_middleware,
     services::jwt::JwtServiceImpl,
 };
@@ -42,8 +42,8 @@ async fn main() {
         println!("Server started on {:?}", listener.local_addr().unwrap());
         let app: axum::Router = routes()
             .layer(middleware::from_fn(auth_middleware))
-            .layer(Extension(pool))
-            .layer(Extension(jwt_service));
+            .layer(Extension(jwt_service))
+            .layer(Extension(pool));
 
         match axum::serve(listener, app).await {
             Ok(_) => {

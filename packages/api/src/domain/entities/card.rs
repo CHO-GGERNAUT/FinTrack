@@ -1,5 +1,4 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::domain::enums::{CardBrand, CardIssuer, CardType};
@@ -17,8 +16,9 @@ pub struct Card {
     pub issued_at: Option<NaiveDate>,
     pub expires_at: Option<NaiveDate>,
     pub billing_day: Option<i32>,
-    pub credit_limit: Option<Decimal>,
     pub brand: CardBrand,
     pub issuer: CardIssuer,
     pub card_type: CardType,
+    pub name: Option<String>,
+    pub memo: Option<String>,
 }

@@ -4,7 +4,7 @@ use sqlx::prelude::{FromRow, Type};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Transaction {
+pub struct TransactionRow {
     pub id: Uuid,
     pub account_id: Uuid,
     pub category_id: Option<Uuid>,
@@ -17,21 +17,21 @@ pub struct Transaction {
     pub approved_at: DateTime<Utc>,
     pub memo: Option<String>,
 
-    pub transaction_type: TransactionType,
+    pub transaction_type: TransactionTypeDb,
 }
 
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
 #[sqlx(type_name = "TEXT")]
-pub enum TransactionType {
+pub enum TransactionTypeDb {
     Income,
     Expense,
 }
 
-impl std::fmt::Display for TransactionType {
+impl std::fmt::Display for TransactionTypeDb {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TransactionType::Income => write!(f, "income"),
-            TransactionType::Expense => write!(f, "expense"),
+            TransactionTypeDb::Income => write!(f, "income"),
+            TransactionTypeDb::Expense => write!(f, "expense"),
         }
     }
 }

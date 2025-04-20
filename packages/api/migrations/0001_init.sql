@@ -28,7 +28,6 @@ CREATE TABLE account (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
-    name TEXT NOT NULL,
     account_type TEXT CHECK (account_type IN ('card', 'bank')) NOT NULL
 );
 
@@ -38,14 +37,15 @@ CREATE TABLE card (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     card_number_last4 CHAR(4) NOT NULL,
-    encrypted_card_number BYTEA NOT NULL,
+    encrypted_card_number BYTEA UNIQUE NOT NULL,
     issued_at DATE,
     expires_at DATE,
     billing_day INT CHECK (billing_day BETWEEN 1 AND 31),
-    credit_limit NUMERIC,
     brand card_brand NOT NULL,
     issuer card_issuer NOT NULL,
-    card_type card_type NOT NULL
+    card_type card_type NOT NULL,
+    name TEXT,
+    memo TEXT
 );
 
 CREATE TABLE bank (
@@ -53,9 +53,10 @@ CREATE TABLE bank (
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
-
+    account_number TEXT NOT NULL,
     name TEXT,
-    account_number TEXT
+    memo TEXT
+    
 );
 CREATE TABLE category (
     id UUID PRIMARY KEY,

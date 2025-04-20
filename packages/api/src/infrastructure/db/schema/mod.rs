@@ -1,4 +1,3 @@
-pub mod account;
 pub mod bank;
 pub mod category;
 pub mod merchant;
@@ -10,3 +9,6 @@ pub use card::*;
 
 mod user;
 pub use user::*;
+
+mod account;
+pub use account::*;

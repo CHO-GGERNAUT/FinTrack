@@ -6,12 +6,13 @@ use axum::{
 
 use crate::{
     application::{
-        dto::CreateUserInput,
-        usecases::user::{CreateUserUsecase, IssueTokenUsecase},
+        command::user::CreateUserUsecase,
+        dto::{CreateUserInput, IssueTokenInput},
+        query::auth::IssueTokenUsecase,
     },
     infrastructure::{
         config::Config,
-        db::{ArcPgPool, repositories::UserRepositoryPostgres},
+        db::{ArcPgPool, repositories::UserRepositoryPostgresPool},
         services::jwt::JwtServiceImpl,
     },
     presentation::dto::user::{CreateUserRequest, CreateUserResponse, LoginRequest},
@@ -21,15 +22,9 @@ pub async fn register_handler(
     Extension(pool): Extension<ArcPgPool>,
     Json(req): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, (StatusCode, String)> {
-    let hashed = bcrypt::hash(req.password, 10)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    let usecase = CreateUserUsecase::new(UserRepositoryPostgres::new(pool));
+    let usecase = CreateUserUsecase::new(UserRepositoryPostgresPool::new(pool));
     let res = usecase
-        .execute(CreateUserInput {
-            name: req.name,
-            email: req.email,
-            password: hashed,
-        })
+        .execute(CreateUserInput::from(req))
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(res.into()))
@@ -40,10 +35,10 @@ pub async fn login_handler(
     Json(req): Json<LoginRequest>,
 ) -> Result<Response, (StatusCode, String)> {
     let jwt = JwtServiceImpl::new(&Config::get().jwt_secret);
-    let usecase = IssueTokenUsecase::new(UserRepositoryPostgres::new(pool), jwt);
+    let usecase = IssueTokenUsecase::new(UserRepositoryPostgresPool::new(pool), jwt);
 
     let output = usecase
-        .execute(req.into())
+        .execute(IssueTokenInput::from(req))
         .await
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
 

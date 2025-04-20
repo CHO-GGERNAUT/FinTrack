@@ -1,16 +1,11 @@
-pub mod dto {
-    mod card;
-    mod claims;
-    mod user;
-
-    pub use card::*;
-    pub use claims::*;
-    pub use user::*;
-}
-pub mod error;
-pub mod usecases;
+pub mod command;
+pub mod dto;
+pub mod query;
 
 pub mod services {
     mod jwt_service;
     pub use jwt_service::JwtService;
 }
+
+mod error;
+pub(super) use error::*;
