@@ -1,4 +1,4 @@
-use axum::{Extension, Json, http::StatusCode};
+use axum::{Extension, Json, extract::Path, http::StatusCode};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -16,7 +16,7 @@ use crate::{
 pub async fn create_card_transaction_handler(
     Extension(pool): Extension<PgPool>,
     Extension(claims): Extension<Option<Claims>>,
-
+    Path(card_id): Path<Uuid>,
     Json(req): Json<CreateCardTransactionRequest>,
 ) -> Result<Json<CreateCardTransactionResponse>, (StatusCode, String)> {
     let user_id = if let Some(claims) = claims {
@@ -28,7 +28,7 @@ pub async fn create_card_transaction_handler(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let usecase = CreateCardTransactionUsecase::new(uow);
-    let input: CreateCardTransactionInput = (req, user_id).try_into().map_err(|e| {
+    let input: CreateCardTransactionInput = (req, card_id, user_id).try_into().map_err(|e| {
         tracing::error!("Failed to convert request to input: {}", e);
         (StatusCode::BAD_REQUEST, e)
     })?;

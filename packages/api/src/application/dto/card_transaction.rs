@@ -9,7 +9,7 @@ use super::CreateMerchantInput;
 #[derive(Debug)]
 pub struct CreateCardTransactionInput {
     pub user_id: Uuid,
-    pub account_id: Uuid,
+    pub card_id: Uuid,
     pub category_id: Option<Uuid>,
     pub merchant: MerchantInput,
     pub amount: Decimal,
@@ -21,7 +21,8 @@ pub struct CreateCardTransactionInput {
 
 #[derive(Debug)]
 pub struct CreateCardTransactionOutput {
-    pub id: Uuid,
+    pub transaction_id: Uuid,
+    pub merchant_id: Uuid,
 }
 
 #[derive(Debug)]

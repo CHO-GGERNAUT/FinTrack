@@ -1,14 +1,12 @@
-use chrono::{DateTime, NaiveDate, Utc};
-use uuid::Uuid;
+use chrono::NaiveDate;
 
 use crate::domain::enums::{CardBrand, CardIssuer, CardType};
 
+use super::Account;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Card {
-    pub account_id: Uuid,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
+    pub account: Account,
 
     pub card_number_last4: String,
     pub encrypted_card_number: Vec<u8>,

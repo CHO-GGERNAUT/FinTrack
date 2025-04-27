@@ -14,7 +14,6 @@ pub trait CardTransactionUnitOfWork: UnitOfWork {
     type CardTransactionRepo<'a>: CardTransactionRepository + Send
     where
         Self: 'a;
-
     type MerchantRepo<'a>: MerchantRepository + Send
     where
         Self: 'a;

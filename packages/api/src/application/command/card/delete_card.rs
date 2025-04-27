@@ -3,10 +3,7 @@ use crate::{
         dto::{DeleteCardInput, DeleteCardOutput},
         errors::ApplicationError,
     },
-    domain::{
-        repositories::{AccountRepository, CardRepository},
-        unit_of_works::CardUnitOfWork,
-    },
+    domain::{repositories::CardRepository, unit_of_works::CardUnitOfWork},
 };
 
 pub struct DeleteCardUsecase<U: CardUnitOfWork> {
@@ -21,24 +18,14 @@ impl<U: CardUnitOfWork> DeleteCardUsecase<U> {
         mut self,
         input: DeleteCardInput,
     ) -> Result<DeleteCardOutput, ApplicationError> {
-        {
-            let mut account_repo = self.uow.account_repo();
-            let account = account_repo.find_by_id(input.account_id).await?;
-            if account.owner_id != input.owner_id {
-                return Err(ApplicationError::ValidationError(
-                    "You are not the owner of this account".to_string(),
-                ));
-            }
-        }
-        {
-            let mut card_repo = self.uow.card_repo();
-            card_repo.delete(input.account_id).await?;
-        }
-        {
-            let mut account_repo = self.uow.account_repo();
-            account_repo.delete(input.account_id).await?;
-        }
+        let card = self.uow.card_repo().find_by_id(input.account_id).await?;
 
+        if card.account.owner_id != input.owner_id {
+            return Err(ApplicationError::ValidationError(
+                "You are not the owner of this card".to_string(),
+            ));
+        }
+        self.uow.card_repo().delete(input.account_id).await?;
         self.uow.commit().await?;
 
         Ok(DeleteCardOutput {

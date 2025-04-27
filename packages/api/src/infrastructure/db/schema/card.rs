@@ -1,16 +1,16 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
 
-use crate::domain;
+use crate::domain::{self, entities::Account};
+
+use super::AccountRow;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct CardRow {
     pub account_id: Uuid,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub deleted_at: Option<DateTime<Utc>>,
+
     pub card_number_last4: String,
     pub encrypted_card_number: Vec<u8>,
     pub issued_at: Option<NaiveDate>,
@@ -23,23 +23,27 @@ pub struct CardRow {
     pub memo: Option<String>,
 }
 
-impl From<CardRow> for domain::entities::Card {
-    fn from(row: CardRow) -> Self {
+impl From<(CardRow, AccountRow)> for domain::entities::Card {
+    fn from((card_row, account_row): (CardRow, AccountRow)) -> Self {
         Self {
-            account_id: row.account_id,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            deleted_at: row.deleted_at,
-            card_number_last4: row.card_number_last4,
-            encrypted_card_number: row.encrypted_card_number,
-            issued_at: row.issued_at,
-            expires_at: row.expires_at,
-            billing_day: row.billing_day,
-            brand: domain::enums::CardBrand::from(row.brand),
-            issuer: domain::enums::CardIssuer::from(row.issuer),
-            card_type: domain::enums::CardType::from(row.card_type),
-            name: row.name,
-            memo: row.memo,
+            account: Account {
+                id: account_row.id,
+                owner_id: account_row.owner_id,
+                created_at: account_row.created_at,
+                updated_at: account_row.updated_at,
+                deleted_at: account_row.deleted_at,
+                account_type: domain::enums::AccountType::Card,
+            },
+            card_number_last4: card_row.card_number_last4,
+            encrypted_card_number: card_row.encrypted_card_number,
+            issued_at: card_row.issued_at,
+            expires_at: card_row.expires_at,
+            billing_day: card_row.billing_day,
+            brand: domain::enums::CardBrand::from(card_row.brand),
+            issuer: domain::enums::CardIssuer::from(card_row.issuer),
+            card_type: domain::enums::CardType::from(card_row.card_type),
+            name: card_row.name,
+            memo: card_row.memo,
         }
     }
 }

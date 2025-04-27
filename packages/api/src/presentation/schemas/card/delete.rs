@@ -20,7 +20,7 @@ pub struct FindByIdResponse {
 impl From<Card> for FindByIdResponse {
     fn from(card: Card) -> Self {
         Self {
-            account_id: card.account_id,
+            account_id: card.account.id,
             card_number_last4: card.card_number_last4,
             issued_at: card.issued_at,
             expires_at: card.expires_at,

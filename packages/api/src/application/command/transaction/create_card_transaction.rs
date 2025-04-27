@@ -26,8 +26,7 @@ impl<U: CardTransactionUnitOfWork> CreateCardTransactionUsecase<U> {
     ) -> Result<CreateCardTransactionOutput, ApplicationError> {
         let now = Utc::now();
         let transaction_id = Uuid::new_v4();
-
-        let account = self.uow.account_repo().find_by_id(input.account_id).await?;
+        let account = self.uow.account_repo().find_by_id(input.card_id).await?;
         if account.owner_id != input.user_id {
             return Err(ApplicationError::RepositoryError(
                 "Account not found".to_string(),
@@ -53,7 +52,7 @@ impl<U: CardTransactionUnitOfWork> CreateCardTransactionUsecase<U> {
 
         let transaction = CardTransaction {
             id: transaction_id,
-            account_id: input.account_id,
+            account_id: account.id,
             user_id: input.user_id,
             merchant_id,
             category_id: None,
@@ -71,6 +70,9 @@ impl<U: CardTransactionUnitOfWork> CreateCardTransactionUsecase<U> {
 
         self.uow.commit().await?;
 
-        Ok(CreateCardTransactionOutput { id: transaction_id })
+        Ok(CreateCardTransactionOutput {
+            transaction_id,
+            merchant_id,
+        })
     }
 }

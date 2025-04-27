@@ -1,4 +1,4 @@
-use axum::{Extension, Json, http::StatusCode};
+use axum::{Extension, Json, extract::Path, http::StatusCode};
 use bcrypt::{DEFAULT_COST, hash};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -7,10 +7,12 @@ use crate::{
     application::{
         command::card::{CreateCardUsecase, DeleteCardUsecase},
         dto::{Claims, CreateCardInput, DeleteCardInput},
+        query::card::CardFindByIdUsecase,
     },
     infrastructure::db::unit_of_works::CardUnitOfWorkPostgres,
     presentation::schemas::card::{
         CreateCardRequest, CreateCardResponse, DeleteCardRequest, DeleteCardResponse,
+        FindByIdResponse,
     },
 };
 
@@ -87,6 +89,30 @@ pub async fn delete_card_handler(
             (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
         })?;
 
+    Ok(Json(res.into()))
+}
+
+pub async fn find_by_id(
+    Extension(pool): Extension<PgPool>,
+    Extension(claims): Extension<Option<Claims>>,
+    Path(card_id): Path<Uuid>,
+) -> Result<Json<FindByIdResponse>, (StatusCode, String)> {
+    let owner_id = if let Some(claims) = claims {
+        Uuid::parse_str(&claims.user_id).unwrap()
+    } else {
+        return Err((StatusCode::UNAUTHORIZED, "Unauthorized".to_string()));
+    };
+    tracing::debug!("card_id: {card_id}");
+
+    let uow = CardUnitOfWorkPostgres::new(pool).await.map_err(|e| {
+        tracing::error!("Failed to create unit of work: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
+    let usecase = CardFindByIdUsecase::new(uow);
+    let res = usecase.execute(card_id, owner_id).await.map_err(|e| {
+        tracing::error!("Failed to find card: {}", e);
+        (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+    })?;
     Ok(Json(res.into()))
 }
 

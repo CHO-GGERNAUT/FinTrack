@@ -41,6 +41,7 @@ impl From<domain::enums::AccountType> for AccountTypeDb {
         }
     }
 }
+
 impl From<AccountRow> for domain::entities::Account {
     fn from(row: AccountRow) -> Self {
         Self {

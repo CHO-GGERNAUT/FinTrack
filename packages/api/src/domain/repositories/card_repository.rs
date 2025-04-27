@@ -7,4 +7,5 @@ use uuid::Uuid;
 pub trait CardRepository {
     async fn create(&mut self, card: &Card) -> Result<Card, DomainError>;
     async fn delete(&mut self, account_id: Uuid) -> Result<(), DomainError>;
+    async fn find_by_id(&mut self, card_id: Uuid) -> Result<Card, DomainError>;
 }
