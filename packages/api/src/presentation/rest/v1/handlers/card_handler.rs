@@ -8,7 +8,7 @@ use crate::{
         dto::{Claims, CreateCardInput, DeleteCardInput},
     },
     infrastructure::db::{ArcPgPool, unit_of_works::CardUnitOfWorkPostgres},
-    presentation::dto::card::{
+    presentation::schemas::card::{
         CreateCardRequest, CreateCardResponse, DeleteCardRequest, DeleteCardResponse,
     },
 };

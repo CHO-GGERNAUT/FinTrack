@@ -3,7 +3,7 @@ use axum::{Extension, Json, http::StatusCode};
 use crate::{
     application::{command::user::CreateUserUsecase, dto::CreateUserInput},
     infrastructure::db::{ArcPgPool, repositories::UserRepositoryPostgresPool},
-    presentation::dto::user::{CreateUserRequest, CreateUserResponse},
+    presentation::schemas::user::{CreateUserRequest, CreateUserResponse},
 };
 
 pub async fn create_user_handler(

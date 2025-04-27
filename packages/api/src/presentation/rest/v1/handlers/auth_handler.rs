@@ -15,7 +15,7 @@ use crate::{
         db::{ArcPgPool, repositories::UserRepositoryPostgresPool},
         services::jwt::JwtServiceImpl,
     },
-    presentation::dto::user::{CreateUserRequest, CreateUserResponse, LoginRequest},
+    presentation::schemas::user::{CreateUserRequest, CreateUserResponse, LoginRequest},
 };
 
 pub async fn register_handler(
