@@ -1,4 +1,4 @@
-CREATE TABLE "user" (
+CREATE TABLE "users" (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -22,17 +22,17 @@ CREATE TYPE card_type AS ENUM (
     'credit', 'debit', 'prepaid'
 );
 
-CREATE TABLE account (
+CREATE TABLE accounts (
     id UUID PRIMARY KEY,
-    owner_id UUID NOT NULL REFERENCES "user"(id),
+    owner_id UUID NOT NULL REFERENCES "users"(id),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
     account_type TEXT CHECK (account_type IN ('card', 'bank')) NOT NULL
 );
 
-CREATE TABLE card (
-    account_id UUID PRIMARY KEY REFERENCES account(id),
+CREATE TABLE cards (
+    account_id UUID PRIMARY KEY REFERENCES accounts(id),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
@@ -48,8 +48,8 @@ CREATE TABLE card (
     memo TEXT
 );
 
-CREATE TABLE bank (
-    account_id UUID PRIMARY KEY REFERENCES account(id),
+CREATE TABLE banks (
+    account_id UUID PRIMARY KEY REFERENCES accounts(id),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
@@ -58,7 +58,7 @@ CREATE TABLE bank (
     memo TEXT
     
 );
-CREATE TABLE category (
+CREATE TABLE categories (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -67,10 +67,10 @@ CREATE TABLE category (
     path LTREE NOT NULL UNIQUE
 );
 
-CREATE TABLE transaction (
+CREATE TABLE transactions (
     id UUID PRIMARY KEY,
-    account_id UUID NOT NULL REFERENCES account(id),
-    category_id UUID REFERENCES category(id),
+    account_id UUID NOT NULL REFERENCES accounts(id),
+    category_id UUID REFERENCES categories(id),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     deleted_at TIMESTAMPTZ,
@@ -81,7 +81,7 @@ CREATE TABLE transaction (
 );
 
 -- 사업자/가맹점
-CREATE TABLE merchant (
+CREATE TABLE merchants (
     id UUID PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -95,26 +95,26 @@ CREATE TABLE merchant (
 );
 
 CREATE TABLE transaction_card_detail (
-    transaction_id UUID PRIMARY KEY REFERENCES transaction(id),
-    merchant_id UUID REFERENCES merchant(id),
+    transaction_id UUID PRIMARY KEY REFERENCES transactions(id),
+    merchant_id UUID REFERENCES merchants(id),
     installment_months INT
 );
 
 
 
-CREATE INDEX idx_category_path_gist ON category USING GIST (path);
+CREATE INDEX idx_categories_path_gist ON categories USING GIST (path);
 
 -- account table index
-CREATE INDEX idx_account_owner_id ON account(owner_id);
+CREATE INDEX idx_accounts_owner_id ON accounts(owner_id);
 
 -- transaction table index
-CREATE INDEX idx_transaction_account_id ON transaction(account_id);
-CREATE INDEX idx_transaction_date ON transaction(transaction_type);
-CREATE INDEX idx_transaction_approved_at ON transaction(approved_at);
+CREATE INDEX idx_transactions_account_id ON transactions(account_id);
+CREATE INDEX idx_transactions_date ON transactions(transaction_type);
+CREATE INDEX idx_transactions_approved_at ON transactions(approved_at);
 
 -- merchant table index
-CREATE INDEX idx_merchant_biz_number ON merchant(biz_number);
+CREATE INDEX idx_merchants_biz_number ON merchants(biz_number);
 
 -- card table index
-CREATE INDEX idx_card_card_number_last4 ON card(card_number_last4);
-CREATE INDEX idx_card_encrypted_card_number ON card(encrypted_card_number);
+CREATE INDEX idx_cards_card_number_last4 ON cards(card_number_last4);
+CREATE INDEX idx_cards_encrypted_card_number ON cards(encrypted_card_number);

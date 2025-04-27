@@ -2,7 +2,7 @@
 
 CREATE TYPE card_issuer_new AS ENUM ('samsung', 'bc', 'woori', 'hana', 'shinhan', 'hyundai', 'kb', 'lotte', 'nh');
 
-ALTER TABLE card
+ALTER TABLE cards
     ALTER COLUMN issuer TYPE card_issuer_new
     USING issuer::text::card_issuer_new;
 
