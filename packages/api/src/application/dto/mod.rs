@@ -7,5 +7,8 @@ pub use claims::*;
 mod user;
 pub use user::*;
 
-mod transaction;
-pub use transaction::*;
+mod card_transaction;
+pub use card_transaction::*;
+
+mod merchant;
+pub use merchant::*;

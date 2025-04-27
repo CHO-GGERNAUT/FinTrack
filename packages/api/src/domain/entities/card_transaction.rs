@@ -4,18 +4,22 @@ use uuid::Uuid;
 
 use crate::domain::enums::TransactionType;
 
-#[derive(Debug)]
-pub struct CreateTransactionInput {
+#[derive(Debug, Clone, PartialEq)]
+pub struct CardTransaction {
+    pub id: Uuid,
     pub account_id: Uuid,
+    pub user_id: Uuid,
+    pub merchant_id: Uuid,
     pub category_id: Option<Uuid>,
+
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
 
     pub amount: Decimal,
     pub approved_at: DateTime<Utc>,
     pub memo: Option<String>,
     pub transaction_type: TransactionType,
-}
 
-#[derive(Debug)]
-pub struct CreateTransactionOutput {
-    pub id: Uuid,
+    pub installment_months: i32,
 }

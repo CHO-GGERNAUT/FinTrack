@@ -4,12 +4,16 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    application::dto::{CreateTransactionInput, CreateTransactionOutput},
+    application::dto::{
+        CreateCardTransactionInput, CreateCardTransactionOutput, CreateMerchantInput, MerchantInput,
+    },
     domain,
 };
 
+use super::merchant::CreateMerchantRequest;
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CreateTransactionRequest {
+pub struct CreateCardTransactionRequest {
     pub account_id: Uuid,
     pub category_id: Option<Uuid>,
 
@@ -17,6 +21,10 @@ pub struct CreateTransactionRequest {
     pub approved_at: DateTime<Utc>,
     pub memo: Option<String>,
     pub transaction_type: TransactionType,
+    pub installment_months: Option<i32>,
+
+    pub merchant_id: Option<Uuid>,
+    pub merchant: Option<CreateMerchantRequest>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,26 +43,42 @@ impl From<TransactionType> for domain::enums::TransactionType {
     }
 }
 
-#[derive(Debug, Serialize)]
-pub struct CreateTransactionResponse {
-    pub id: Uuid,
-}
+impl TryFrom<(CreateCardTransactionRequest, Uuid)> for CreateCardTransactionInput {
+    type Error = String;
 
-impl From<CreateTransactionRequest> for CreateTransactionInput {
-    fn from(req: CreateTransactionRequest) -> Self {
-        Self {
+    fn try_from((req, user_id): (CreateCardTransactionRequest, Uuid)) -> Result<Self, Self::Error> {
+        Ok(Self {
             account_id: req.account_id,
             category_id: req.category_id,
+            user_id,
             amount: req.amount,
             approved_at: req.approved_at,
             memo: req.memo,
             transaction_type: req.transaction_type.into(),
-        }
+            installment_months: req.installment_months,
+            merchant: if let Some(merchant_id) = req.merchant_id {
+                MerchantInput::ById(merchant_id)
+            } else if let Some(merchant) = req.merchant {
+                MerchantInput::ByInfo(CreateMerchantInput {
+                    name: merchant.name,
+                    biz_number: merchant.biz_number,
+                    address: merchant.address,
+                    phone: merchant.phone,
+                })
+            } else {
+                return Err("Either merchant_id or merchant must be provided".to_string());
+            },
+        })
     }
 }
 
-impl From<CreateTransactionOutput> for CreateTransactionResponse {
-    fn from(res: CreateTransactionOutput) -> Self {
+#[derive(Debug, Serialize)]
+pub struct CreateCardTransactionResponse {
+    pub id: Uuid,
+}
+
+impl From<CreateCardTransactionOutput> for CreateCardTransactionResponse {
+    fn from(res: CreateCardTransactionOutput) -> Self {
         Self { id: res.id }
     }
 }

@@ -12,8 +12,8 @@ pub mod user {
 }
 
 pub mod transaction {
-    mod create_transaction;
-    pub use create_transaction::*;
+    mod create_card_transaction;
+    pub use create_card_transaction::*;
 }
 
 mod auth {}

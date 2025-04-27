@@ -15,3 +15,18 @@ pub struct MerchantRow {
     pub address: Option<String>,
     pub phone: Option<String>,
 }
+
+impl From<MerchantRow> for crate::domain::entities::Merchant {
+    fn from(row: MerchantRow) -> Self {
+        Self {
+            id: row.id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            deleted_at: row.deleted_at,
+            name: row.name,
+            biz_number: row.biz_number,
+            address: row.address,
+            phone: row.phone,
+        }
+    }
+}

@@ -28,7 +28,7 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
         let row = sqlx::query_as!(
             AccountRow,
             r#"
-            INSERT INTO account (id, owner_id, account_type)
+            INSERT INTO accounts (id, owner_id, account_type)
             VALUES ($1, $2, $3)
             RETURNING 
                 id,
@@ -57,7 +57,7 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
 
         sqlx::query!(
             r#"
-            DELETE FROM account
+            DELETE FROM accounts
             WHERE id = $1
             "#,
             account_id
@@ -86,7 +86,7 @@ impl<'a> AccountRepository for AccountRepositoryPostgres<'a> {
                     deleted_at,
                     account_type as "account_type:AccountTypeDb"
                 FROM
-                    account
+                    accounts
                 WHERE
                     id = $1
             "#,

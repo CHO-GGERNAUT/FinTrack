@@ -9,3 +9,6 @@ pub use user_repository::*;
 
 mod transaction_repository;
 pub use transaction_repository::*;
+
+mod merchant_repository;
+pub use merchant_repository::*;

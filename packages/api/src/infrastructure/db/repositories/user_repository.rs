@@ -26,7 +26,7 @@ impl<'a> UserRepository for UserRepositoryPostgres<'a> {
         let result = sqlx::query_as!(
             UserRow,
             r#"
-            INSERT INTO "user" (id, name, email, password)
+            INSERT INTO "users" (id, name, email, password)
             VALUES ($1, $2, $3, $4)
             RETURNING *
             "#,
@@ -48,7 +48,7 @@ impl<'a> UserRepository for UserRepositoryPostgres<'a> {
     async fn find_by_email(&mut self, email: &str) -> Result<User, DomainError> {
         let tx = self.tx.as_mut();
 
-        sqlx::query_as!(UserRow, r#"SELECT * FROM "user" WHERE email = $1"#, email)
+        sqlx::query_as!(UserRow, r#"SELECT * FROM "users" WHERE email = $1"#, email)
             .fetch_optional(tx)
             .await
             .map_err(|e| {

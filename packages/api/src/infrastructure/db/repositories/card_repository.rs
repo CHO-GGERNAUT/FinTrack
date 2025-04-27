@@ -28,7 +28,7 @@ impl<'a> CardRepository for CardRepositoryPostgres<'a> {
         let row = sqlx::query_as!(
             CardRow,
             r#"
-                INSERT INTO card (
+                INSERT INTO cards (
                     account_id,
                     card_number_last4,
                     encrypted_card_number,
@@ -87,7 +87,7 @@ impl<'a> CardRepository for CardRepositoryPostgres<'a> {
     async fn delete(&mut self, account_id: Uuid) -> Result<(), DomainError> {
         let tx = self.tx.as_mut();
 
-        sqlx::query!(r#"DELETE FROM card WHERE account_id = $1"#, account_id)
+        sqlx::query!(r#"DELETE FROM cards WHERE account_id = $1"#, account_id)
             .execute(tx)
             .await
             .map_err(|e| {

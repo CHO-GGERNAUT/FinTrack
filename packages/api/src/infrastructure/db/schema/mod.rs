@@ -1,7 +1,5 @@
 pub mod bank;
 pub mod category;
-pub mod merchant;
-pub mod transaction_card_detail;
 
 mod card;
 pub use card::*;
@@ -14,3 +12,9 @@ pub use account::*;
 
 mod transaction;
 pub use transaction::*;
+
+mod merchant;
+pub use merchant::*;
+
+mod transaction_card_detail;
+pub use transaction_card_detail::*;

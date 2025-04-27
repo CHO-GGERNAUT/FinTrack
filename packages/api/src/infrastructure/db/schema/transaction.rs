@@ -6,9 +6,12 @@ use uuid::Uuid;
 
 use crate::domain;
 
+use super::TransactionCardDetailRow;
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct TransactionRow {
     pub id: Uuid,
+    pub user_id: Uuid,
     pub account_id: Uuid,
     pub category_id: Option<Uuid>,
 
@@ -57,19 +60,22 @@ impl From<TransactionTypeDb> for domain::enums::TransactionType {
     }
 }
 
-impl From<TransactionRow> for domain::entities::Transaction {
-    fn from(row: TransactionRow) -> Self {
+impl From<(TransactionRow, TransactionCardDetailRow)> for domain::entities::CardTransaction {
+    fn from((transaction, card_detail): (TransactionRow, TransactionCardDetailRow)) -> Self {
         Self {
-            id: row.id,
-            account_id: row.account_id,
-            category_id: row.category_id,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            deleted_at: row.deleted_at,
-            amount: row.amount,
-            approved_at: row.approved_at,
-            memo: row.memo,
-            transaction_type: domain::enums::TransactionType::from(row.transaction_type),
+            id: transaction.id,
+            user_id: transaction.user_id,
+            merchant_id: card_detail.merchant_id,
+            installment_months: card_detail.installment_months.unwrap_or_default(),
+            account_id: transaction.account_id,
+            category_id: transaction.category_id,
+            created_at: transaction.created_at,
+            updated_at: transaction.updated_at,
+            deleted_at: transaction.deleted_at,
+            amount: transaction.amount,
+            approved_at: transaction.approved_at,
+            memo: transaction.memo,
+            transaction_type: domain::enums::TransactionType::from(transaction.transaction_type),
         }
     }
 }
