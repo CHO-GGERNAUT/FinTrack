@@ -14,19 +14,28 @@ use crate::{
 use async_trait::async_trait;
 use sqlx::{Postgres, Transaction};
 
+use super::base_uow::BaseUnitOfWork;
+
 pub struct CardUnitOfWorkPostgres {
-    tx: Transaction<'static, Postgres>,
+    // tx: Transaction<'static, Postgres>,
+    base: BaseUnitOfWork<Postgres>,
 }
 
 impl CardUnitOfWorkPostgres {
+    
     pub async fn new(pool: ArcPgPool) -> Result<Self, InfraError> {
-        let tx: Transaction<'static, Postgres> = pool.begin().await.map_err(|e| {
+        let tx = pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
             InfraError::DatabaseError(e.to_string())
         })?;
 
-        Ok(Self { tx })
+        Ok(Self { base: BaseUnitOfWork::new(tx) })
     }
+
+    fn tx(&mut self) -> &mut Transaction<'static, Postgres> {
+        self.base.tx()
+    }
+
 }
 
 #[async_trait]
@@ -35,28 +44,22 @@ impl CardUnitOfWork for CardUnitOfWorkPostgres {
     type CardRepo<'a> = CardRepositoryPostgres<'a>;
 
     fn card_repo(&mut self) -> CardRepositoryPostgres<'_> {
-        CardRepositoryPostgres::new(&mut self.tx)
+        let tx = self.base.tx();
+        CardRepositoryPostgres::new(tx)
     }
     fn account_repo(&mut self) -> Self::AccountRepo<'_> {
-        AccountRepositoryPostgres::new(&mut self.tx)
+        let tx = self.base.tx();
+        AccountRepositoryPostgres::new(tx)
     }
 }
 
 #[async_trait]
 impl UnitOfWork for CardUnitOfWorkPostgres {
     async fn commit(self) -> Result<(), DomainError> {
-        self.tx.commit().await.map_err(|e| {
-            tracing::error!("Failed to commit transaction: {}", e);
-            UowError::CommitError(e.to_string())
-        })?;
-        Ok(())
+        self.base.commit().await
     }
 
     async fn rollback(self) -> Result<(), DomainError> {
-        self.tx.rollback().await.map_err(|e| {
-            tracing::error!("Failed to commit transaction: {}", e);
-            UowError::RollbackError(e.to_string())
-        })?;
-        Ok(())
+        self.base.rollback().await
     }
 }
