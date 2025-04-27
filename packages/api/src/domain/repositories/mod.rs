@@ -6,3 +6,6 @@ pub use card_repository::*;
 
 mod user_repository;
 pub use user_repository::*;
+
+mod transaction_repository;
+pub use transaction_repository::*;
