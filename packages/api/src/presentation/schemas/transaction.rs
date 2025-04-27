@@ -14,7 +14,6 @@ use super::merchant::CreateMerchantRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateCardTransactionRequest {
-    pub account_id: Uuid,
     pub category_id: Option<Uuid>,
 
     pub amount: Decimal,
@@ -43,12 +42,14 @@ impl From<TransactionType> for domain::enums::TransactionType {
     }
 }
 
-impl TryFrom<(CreateCardTransactionRequest, Uuid)> for CreateCardTransactionInput {
+impl TryFrom<(CreateCardTransactionRequest, Uuid, Uuid)> for CreateCardTransactionInput {
     type Error = String;
 
-    fn try_from((req, user_id): (CreateCardTransactionRequest, Uuid)) -> Result<Self, Self::Error> {
+    fn try_from(
+        (req, card_id, user_id): (CreateCardTransactionRequest, Uuid, Uuid),
+    ) -> Result<Self, Self::Error> {
         Ok(Self {
-            account_id: req.account_id,
+            card_id,
             category_id: req.category_id,
             user_id,
             amount: req.amount,
@@ -74,11 +75,15 @@ impl TryFrom<(CreateCardTransactionRequest, Uuid)> for CreateCardTransactionInpu
 
 #[derive(Debug, Serialize)]
 pub struct CreateCardTransactionResponse {
-    pub id: Uuid,
+    pub transaction_id: Uuid,
+    pub merchant_id: Uuid,
 }
 
 impl From<CreateCardTransactionOutput> for CreateCardTransactionResponse {
     fn from(res: CreateCardTransactionOutput) -> Self {
-        Self { id: res.id }
+        Self {
+            transaction_id: res.transaction_id,
+            merchant_id: res.merchant_id,
+        }
     }
 }
