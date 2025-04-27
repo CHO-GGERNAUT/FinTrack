@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sqlx::{Postgres, Transaction};
+use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::{
     domain::{
@@ -7,7 +7,7 @@ use crate::{
         errors::{DomainError, UserError},
         repositories::UserRepository,
     },
-    infrastructure::db::{ArcPgPool, schema::UserRow},
+    infrastructure::db::schema::UserRow,
 };
 
 pub struct UserRepositoryPostgres<'a> {
@@ -61,11 +61,11 @@ impl<'a> UserRepository for UserRepositoryPostgres<'a> {
 }
 
 pub struct UserRepositoryPostgresPool {
-    pool: ArcPgPool,
+    pool: PgPool,
 }
 
 impl UserRepositoryPostgresPool {
-    pub fn new(pool: ArcPgPool) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }

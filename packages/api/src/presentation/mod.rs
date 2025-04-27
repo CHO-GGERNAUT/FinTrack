@@ -1,2 +1,2 @@
-pub mod schemas;
 pub mod rest;
+pub mod schemas;

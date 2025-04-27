@@ -2,8 +2,6 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::infrastructure::config::Config;
 
-// pub type ArcPgPool = std::sync::Arc<sqlx::PgPool>;
-
 pub fn create_pool() -> PgPool {
     let config = Config::get();
     let pool = PgPoolOptions::new()

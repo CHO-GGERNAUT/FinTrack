@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use sqlx::{Database, Transaction};
 
 use crate::domain::errors::{DomainError, UowError};

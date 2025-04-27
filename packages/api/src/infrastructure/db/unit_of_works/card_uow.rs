@@ -1,41 +1,33 @@
 use crate::{
     domain::{
-        errors::{DomainError, UowError},
+        errors::DomainError,
         unit_of_works::{CardUnitOfWork, UnitOfWork},
     },
     infrastructure::{
-        db::{
-            ArcPgPool,
-            repositories::{AccountRepositoryPostgres, CardRepositoryPostgres},
-        },
+        db::repositories::{AccountRepositoryPostgres, CardRepositoryPostgres},
         errors::InfraError,
     },
 };
 use async_trait::async_trait;
-use sqlx::{Postgres, Transaction};
+use sqlx::{PgPool, Postgres};
 
 use super::base_uow::BaseUnitOfWork;
 
 pub struct CardUnitOfWorkPostgres {
-    // tx: Transaction<'static, Postgres>,
     base: BaseUnitOfWork<Postgres>,
 }
 
 impl CardUnitOfWorkPostgres {
-    
-    pub async fn new(pool: ArcPgPool) -> Result<Self, InfraError> {
+    pub async fn new(pool: PgPool) -> Result<Self, InfraError> {
         let tx = pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
             InfraError::DatabaseError(e.to_string())
         })?;
 
-        Ok(Self { base: BaseUnitOfWork::new(tx) })
+        Ok(Self {
+            base: BaseUnitOfWork::new(tx),
+        })
     }
-
-    fn tx(&mut self) -> &mut Transaction<'static, Postgres> {
-        self.base.tx()
-    }
-
 }
 
 #[async_trait]

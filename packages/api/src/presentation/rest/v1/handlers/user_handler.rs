@@ -1,13 +1,14 @@
 use axum::{Extension, Json, http::StatusCode};
+use sqlx::PgPool;
 
 use crate::{
     application::{command::user::CreateUserUsecase, dto::CreateUserInput},
-    infrastructure::db::{ArcPgPool, repositories::UserRepositoryPostgresPool},
+    infrastructure::db::repositories::UserRepositoryPostgresPool,
     presentation::schemas::user::{CreateUserRequest, CreateUserResponse},
 };
 
 pub async fn create_user_handler(
-    Extension(pool): Extension<ArcPgPool>,
+    Extension(pool): Extension<PgPool>,
     Json(req): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserResponse>, (StatusCode, String)> {
     let usecase = CreateUserUsecase::new(UserRepositoryPostgresPool::new(pool));

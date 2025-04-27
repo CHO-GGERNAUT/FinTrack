@@ -1,5 +1,6 @@
 use axum::{Extension, Json, http::StatusCode};
 use bcrypt::{DEFAULT_COST, hash};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
@@ -7,14 +8,14 @@ use crate::{
         command::card::{CreateCardUsecase, DeleteCardUsecase},
         dto::{Claims, CreateCardInput, DeleteCardInput},
     },
-    infrastructure::db::{ArcPgPool, unit_of_works::CardUnitOfWorkPostgres},
+    infrastructure::db::unit_of_works::CardUnitOfWorkPostgres,
     presentation::schemas::card::{
         CreateCardRequest, CreateCardResponse, DeleteCardRequest, DeleteCardResponse,
     },
 };
 
 pub async fn create_card_handler(
-    Extension(pool): Extension<ArcPgPool>,
+    Extension(pool): Extension<PgPool>,
     Extension(claims): Extension<Option<Claims>>,
     Json(req): Json<CreateCardRequest>,
 ) -> Result<Json<CreateCardResponse>, (StatusCode, String)> {
@@ -61,7 +62,7 @@ pub async fn create_card_handler(
 }
 
 pub async fn delete_card_handler(
-    Extension(pool): Extension<ArcPgPool>,
+    Extension(pool): Extension<PgPool>,
     Extension(claims): Extension<Option<Claims>>,
     Json(req): Json<DeleteCardRequest>,
 ) -> Result<Json<DeleteCardResponse>, (StatusCode, String)> {

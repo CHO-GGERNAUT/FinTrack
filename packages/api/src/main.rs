@@ -10,9 +10,7 @@ use std::sync::Arc;
 use application::services::JwtService;
 use axum::middleware;
 use infrastructure::{
-    config::Config,
-    db::{ArcPgPool, create_pool::create_pool},
-    middleware::auth_middleware::auth_middleware,
+    config::Config, db::create_pool::create_pool, middleware::auth_middleware::auth_middleware,
     services::jwt::JwtServiceImpl,
 };
 
@@ -28,7 +26,6 @@ async fn main() {
         .try_init();
 
     let pool = create_pool();
-    let pool: ArcPgPool = std::sync::Arc::new(pool);
 
     #[cfg(feature = "rest")]
     {
