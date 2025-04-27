@@ -10,6 +10,9 @@ pub use user::*;
 mod uow;
 pub use uow::*;
 
+mod transaction;
+pub use transaction::*;
+
 use thiserror::Error;
 // domain/errors.rs
 #[derive(Error, Debug)]
@@ -22,6 +25,9 @@ pub enum DomainError {
 
     #[error("Card error: {0}")]
     CardError(#[from] CardError),
+
+    #[error("Transaction error: {0}")]
+    TransactionError(#[from] TransactionError),
 
     #[error("Unknown domain error")]
     Unknown {

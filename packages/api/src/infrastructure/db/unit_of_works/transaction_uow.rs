@@ -1,10 +1,10 @@
 use crate::{
     domain::{
         errors::DomainError,
-        unit_of_works::{CardUnitOfWork, UnitOfWork},
+        unit_of_works::{TransactionUnitOfWork, UnitOfWork},
     },
     infrastructure::{
-        db::repositories::{AccountRepositoryPostgres, CardRepositoryPostgres},
+        db::repositories::{AccountRepositoryPostgres, TransactionRepositoryPostgres},
         errors::InfraError,
     },
 };
@@ -13,11 +13,11 @@ use sqlx::{PgPool, Postgres};
 
 use super::base_uow::BaseUnitOfWork;
 
-pub struct CardUnitOfWorkPostgres {
+pub struct TransactionUnitOfWorkPostgres {
     base: BaseUnitOfWork<Postgres>,
 }
 
-impl CardUnitOfWorkPostgres {
+impl TransactionUnitOfWorkPostgres {
     pub async fn new(pool: PgPool) -> Result<Self, InfraError> {
         let tx = pool.begin().await.map_err(|e| {
             tracing::error!("Failed to begin transaction: {}", e);
@@ -31,22 +31,23 @@ impl CardUnitOfWorkPostgres {
 }
 
 #[async_trait]
-impl CardUnitOfWork for CardUnitOfWorkPostgres {
+impl TransactionUnitOfWork for TransactionUnitOfWorkPostgres {
     type AccountRepo<'a> = AccountRepositoryPostgres<'a>;
-    type CardRepo<'a> = CardRepositoryPostgres<'a>;
+    type TransactionRepo<'a> = TransactionRepositoryPostgres<'a>;
 
-    fn card_repo(&mut self) -> Self::CardRepo<'_> {
-        let tx = self.base.tx();
-        CardRepositoryPostgres::new(tx)
-    }
     fn account_repo(&mut self) -> Self::AccountRepo<'_> {
         let tx = self.base.tx();
         AccountRepositoryPostgres::new(tx)
     }
+
+    fn transaction_repo(&mut self) -> Self::TransactionRepo<'_> {
+        let tx = self.base.tx();
+        TransactionRepositoryPostgres::new(tx)
+    }
 }
 
 #[async_trait]
-impl UnitOfWork for CardUnitOfWorkPostgres {
+impl UnitOfWork for TransactionUnitOfWorkPostgres {
     async fn commit(self) -> Result<(), DomainError> {
         self.base.commit().await
     }

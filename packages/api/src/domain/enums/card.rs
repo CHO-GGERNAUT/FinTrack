@@ -1,13 +1,11 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardType {
     Credit,
     Debit,
     Prepaid,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardBrand {
     Visa,
     Mastercard,
@@ -17,7 +15,7 @@ pub enum CardBrand {
     Etc,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardIssuer {
     Samsung,
     BC,

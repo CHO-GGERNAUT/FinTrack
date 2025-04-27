@@ -4,5 +4,5 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait TransactionRepository {
-    async fn create(&mut self, transaction: Transaction) -> Result<Transaction, DomainError>;
+    async fn create(&mut self, transaction: &Transaction) -> Result<Transaction, DomainError>;
 }

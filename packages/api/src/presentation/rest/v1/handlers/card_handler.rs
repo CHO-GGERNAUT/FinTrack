@@ -47,9 +47,9 @@ pub async fn create_card_handler(
             issued_at: req.issued_at,
             expires_at: req.expires_at,
             billing_day: req.billing_day,
-            brand: req.brand,
-            issuer: req.issuer,
-            card_type: req.card_type,
+            brand: req.brand.into(),
+            issuer: req.issuer.into(),
+            card_type: req.card_type.into(),
             name: req.name,
             memo: req.memo,
         })
