@@ -14,7 +14,7 @@ pub mod routes {
 
 pub fn routes() -> Router {
     Router::new()
-        .nest("/auths", routes::auth_route::routes())
+        .nest("/auth", routes::auth_route::routes())
         .nest("/users", routes::user_route::routes())
         .nest("/cards", routes::card_route::routes())
 }

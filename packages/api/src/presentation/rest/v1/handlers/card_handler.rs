@@ -22,7 +22,7 @@ pub async fn create_card_handler(
     Json(req): Json<CreateCardRequest>,
 ) -> Result<Json<CreateCardResponse>, (StatusCode, String)> {
     let owner_id = if let Some(claims) = claims {
-        Uuid::parse_str(&claims.user_id).unwrap()
+        Uuid::parse_str(&claims.sub).unwrap()
     } else {
         return Err((StatusCode::UNAUTHORIZED, "Unauthorized".to_string()));
     };
@@ -69,7 +69,7 @@ pub async fn delete_card_handler(
     Json(req): Json<DeleteCardRequest>,
 ) -> Result<Json<DeleteCardResponse>, (StatusCode, String)> {
     let owner_id = if let Some(claims) = claims {
-        Uuid::parse_str(&claims.user_id).unwrap()
+        Uuid::parse_str(&claims.sub).unwrap()
     } else {
         return Err((StatusCode::UNAUTHORIZED, "Unauthorized".to_string()));
     };
@@ -97,8 +97,9 @@ pub async fn find_by_id(
     Extension(claims): Extension<Option<Claims>>,
     Path(card_id): Path<Uuid>,
 ) -> Result<Json<FindByIdResponse>, (StatusCode, String)> {
+    tracing::debug!("claims: {:?}", claims);
     let owner_id = if let Some(claims) = claims {
-        Uuid::parse_str(&claims.user_id).unwrap()
+        Uuid::parse_str(&claims.sub).unwrap()
     } else {
         return Err((StatusCode::UNAUTHORIZED, "Unauthorized".to_string()));
     };

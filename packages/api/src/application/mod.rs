@@ -3,8 +3,8 @@ pub mod dto;
 pub mod query;
 
 pub mod services {
-    mod jwt_service;
-    pub use jwt_service::JwtService;
+    mod auth_service;
+    pub use auth_service::AuthService;
 }
 
 pub mod errors;

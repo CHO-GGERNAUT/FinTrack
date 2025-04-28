@@ -8,7 +8,8 @@ use sqlx::PgPool;
 use crate::{
     application::{dto::IssueTokenInput, query::auth::IssueTokenUsecase},
     infrastructure::{
-        config::Config, db::repositories::UserRepositoryPostgresPool, services::jwt::JwtServiceImpl,
+        config::Config, db::repositories::UserRepositoryPostgresPool,
+        services::auth::AuthServiceImpl,
     },
     presentation::schemas::user::LoginRequest,
 };
@@ -17,8 +18,8 @@ pub async fn login_handler(
     Extension(pool): Extension<PgPool>,
     Json(req): Json<LoginRequest>,
 ) -> Result<Response, (StatusCode, String)> {
-    let jwt = JwtServiceImpl::new(&Config::get().jwt_secret);
-    let usecase = IssueTokenUsecase::new(UserRepositoryPostgresPool::new(pool), jwt);
+    let auth = AuthServiceImpl::new(&Config::get().jwt_secret);
+    let usecase = IssueTokenUsecase::new(UserRepositoryPostgresPool::new(pool), auth);
 
     let output = usecase
         .execute(IssueTokenInput::from(req))

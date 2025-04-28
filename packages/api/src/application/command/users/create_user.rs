@@ -2,27 +2,28 @@ use crate::{
     application::{
         dto::{CreateUserInput, CreateUserOutput},
         errors::ApplicationError,
+        services::AuthService,
     },
     domain::{entities::User, repositories::UserRepository},
-    utils::crypto::hash_password,
 };
 
 #[derive(Clone)]
-pub struct CreateUserUsecase<R: UserRepository> {
+pub struct CreateUserUsecase<R: UserRepository, A: AuthService> {
     repo: R,
+    auth: A,
 }
 
-impl<R: UserRepository> CreateUserUsecase<R> {
-    pub fn new(repo: R) -> Self {
-        Self { repo }
+impl<R: UserRepository, A: AuthService> CreateUserUsecase<R, A> {
+    pub fn new(repo: R, auth: A) -> Self {
+        Self { repo, auth }
     }
 
     pub async fn execute(
         mut self,
         input: CreateUserInput,
     ) -> Result<CreateUserOutput, ApplicationError> {
-        let hashed = hash_password(&input.password)
-            .map_err(|e| ApplicationError::HashError(format!("Failed to hash password: {}", e)))?;
+        let hashed = self.auth.hash_password(&input.password)?;
+
         let user = User {
             password: hashed,
             ..input.into()

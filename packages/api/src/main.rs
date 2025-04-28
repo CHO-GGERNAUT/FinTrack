@@ -3,15 +3,13 @@ pub mod domain;
 pub mod infrastructure;
 pub mod presentation;
 
-mod utils;
-
 use std::sync::Arc;
 
-use application::services::JwtService;
+use application::services::AuthService;
 use axum::middleware;
 use infrastructure::{
     config::Config, db::create_pool::create_pool, middleware::auth_middleware::auth_middleware,
-    services::jwt::JwtServiceImpl,
+    services::auth::AuthServiceImpl,
 };
 
 #[tokio::main]
@@ -34,12 +32,12 @@ async fn main() {
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
             .await
             .unwrap();
-        let jwt_service: Arc<dyn JwtService> = Arc::new(JwtServiceImpl::new(&config.jwt_secret));
+        let auth: Arc<dyn AuthService> = Arc::new(AuthServiceImpl::new(&config.jwt_secret));
 
         println!("Server started on {:?}", listener.local_addr().unwrap());
         let app: axum::Router = routes()
             .layer(middleware::from_fn(auth_middleware))
-            .layer(Extension(jwt_service))
+            .layer(Extension(auth))
             .layer(Extension(pool));
 
         match axum::serve(listener, app).await {

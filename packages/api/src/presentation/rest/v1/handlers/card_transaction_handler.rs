@@ -20,7 +20,7 @@ pub async fn create_card_transaction_handler(
     Json(req): Json<CreateCardTransactionRequest>,
 ) -> Result<Json<CreateCardTransactionResponse>, (StatusCode, String)> {
     let user_id = if let Some(claims) = claims {
-        Uuid::parse_str(&claims.user_id).unwrap()
+        Uuid::parse_str(&claims.sub).unwrap()
     } else {
         return Err((StatusCode::UNAUTHORIZED, "Unauthorized".to_string()));
     };

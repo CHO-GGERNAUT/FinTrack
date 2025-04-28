@@ -1,21 +1,21 @@
 use crate::{
     application::{
-        dto::{Claims, IssueTokenInput, IssueTokenOutput},
+        dto::{IssueTokenInput, IssueTokenOutput},
         errors::ApplicationError,
-        services::JwtService,
+        services::AuthService,
     },
     domain::repositories::UserRepository,
 };
 
 #[derive(Clone)]
-pub struct IssueTokenUsecase<R: UserRepository, J: JwtService> {
+pub struct IssueTokenUsecase<R: UserRepository, A: AuthService> {
     repo: R,
-    jwt: J,
+    auth: A,
 }
 
-impl<R: UserRepository, J: JwtService> IssueTokenUsecase<R, J> {
-    pub fn new(repo: R, jwt: J) -> Self {
-        Self { repo, jwt }
+impl<R: UserRepository, A: AuthService> IssueTokenUsecase<R, A> {
+    pub fn new(repo: R, auth: A) -> Self {
+        Self { repo, auth }
     }
 
     pub async fn execute(
@@ -24,33 +24,13 @@ impl<R: UserRepository, J: JwtService> IssueTokenUsecase<R, J> {
     ) -> Result<IssueTokenOutput, ApplicationError> {
         let user = self.repo.find_by_email(&input.email).await?;
 
-        if !self.verify_password(&user.password, &input.password) {
-            return Err(ApplicationError::ValidationError(
-                "Invalid email or password".to_string(),
-            ));
-        }
+        self.auth.verify_password(&input.password, &user.password)?;
 
-        let claims = Claims {
-            sub: user.email.clone(),
-            user_id: user.id.to_string(),
-            exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
-        };
-
-        let token = self
-            .jwt
-            .generate(&claims)
-            .map_err(|e| ApplicationError::JwtError(format!("Failed to generate token: {}", e)))?;
+        let token = self.auth.issue_access_token(user.id)?;
 
         Ok(IssueTokenOutput {
             token,
             user_id: user.id,
         })
-    }
-
-    fn verify_password(&self, hashed: &str, plain: &str) -> bool {
-        match bcrypt::verify(plain, hashed) {
-            Ok(is_valid) => is_valid,
-            Err(_) => false,
-        }
     }
 }

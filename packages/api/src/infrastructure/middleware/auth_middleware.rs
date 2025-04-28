@@ -9,10 +9,10 @@ use axum::{
 };
 use cookie::Cookie;
 
-use crate::application::{dto::Claims, services::JwtService};
+use crate::application::{dto::Claims, services::AuthService};
 
 pub async fn auth_middleware(
-    Extension(jwt): Extension<Arc<dyn JwtService>>,
+    Extension(auth): Extension<Arc<dyn AuthService>>,
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
@@ -42,9 +42,8 @@ pub async fn auth_middleware(
         }
     }
     if let Some(token) = token {
-        if let Ok(token_data) = jwt.verify(&token) {
-            tracing::debug!("Token verified: {:?}", token_data.claims);
-            request.extensions_mut().insert(Some(token_data.claims));
+        if let Ok(token_data) = auth.verify_token(&token) {
+            request.extensions_mut().insert(Some(token_data));
             return Ok(next.run(request).await);
         }
     }
