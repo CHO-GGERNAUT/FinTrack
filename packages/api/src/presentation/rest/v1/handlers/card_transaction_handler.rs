@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     application::{
-        command::transaction::CreateCardTransactionUsecase,
+        command::transactions::CreateCardTransactionUsecase,
         dto::{Claims, CreateCardTransactionInput},
     },
     infrastructure::db::unit_of_works::CardTransactionUnitOfWorkPostgres,

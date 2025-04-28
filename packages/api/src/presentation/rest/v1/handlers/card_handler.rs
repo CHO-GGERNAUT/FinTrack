@@ -5,9 +5,9 @@ use uuid::Uuid;
 
 use crate::{
     application::{
-        command::card::{CreateCardUsecase, DeleteCardUsecase},
+        command::cards::{CreateCardUsecase, DeleteCardUsecase},
         dto::{Claims, CreateCardInput, DeleteCardInput},
-        query::card::CardFindByIdUsecase,
+        query::cards::CardFindByIdUsecase,
     },
     infrastructure::db::unit_of_works::CardUnitOfWorkPostgres,
     presentation::schemas::card::{

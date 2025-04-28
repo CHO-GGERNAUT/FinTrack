@@ -2,7 +2,7 @@ use axum::{Extension, Json, http::StatusCode};
 use sqlx::PgPool;
 
 use crate::{
-    application::{command::user::CreateUserUsecase, dto::CreateUserInput},
+    application::{command::users::CreateUserUsecase, dto::CreateUserInput},
     infrastructure::db::repositories::UserRepositoryPostgresPool,
     presentation::schemas::user::{CreateUserRequest, CreateUserResponse},
 };

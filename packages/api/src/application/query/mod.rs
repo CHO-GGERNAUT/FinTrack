@@ -3,7 +3,7 @@ pub mod auth {
     pub use issue_token::*;
 }
 
-pub mod card {
+pub mod cards {
     mod find_by_id;
     pub use find_by_id::FindByIdUsecase as CardFindByIdUsecase;
 }

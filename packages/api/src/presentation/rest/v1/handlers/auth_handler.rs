@@ -6,28 +6,12 @@ use axum::{
 use sqlx::PgPool;
 
 use crate::{
-    application::{
-        command::user::CreateUserUsecase,
-        dto::{CreateUserInput, IssueTokenInput},
-        query::auth::IssueTokenUsecase,
-    },
+    application::{dto::IssueTokenInput, query::auth::IssueTokenUsecase},
     infrastructure::{
         config::Config, db::repositories::UserRepositoryPostgresPool, services::jwt::JwtServiceImpl,
     },
-    presentation::schemas::user::{CreateUserRequest, CreateUserResponse, LoginRequest},
+    presentation::schemas::user::LoginRequest,
 };
-
-pub async fn register_handler(
-    Extension(pool): Extension<PgPool>,
-    Json(req): Json<CreateUserRequest>,
-) -> Result<Json<CreateUserResponse>, (StatusCode, String)> {
-    let usecase = CreateUserUsecase::new(UserRepositoryPostgresPool::new(pool));
-    let res = usecase
-        .execute(CreateUserInput::from(req))
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
-    Ok(Json(res.into()))
-}
 
 pub async fn login_handler(
     Extension(pool): Extension<PgPool>,

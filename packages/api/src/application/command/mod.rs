@@ -1,4 +1,4 @@
-pub mod card {
+pub mod cards {
     mod create_card;
     pub use create_card::*;
 
@@ -6,14 +6,12 @@ pub mod card {
     pub use delete_card::*;
 }
 
-pub mod user {
+pub mod users {
     mod create_user;
     pub use create_user::*;
 }
 
-pub mod transaction {
+pub mod transactions {
     mod create_card_transaction;
     pub use create_card_transaction::*;
 }
-
-mod auth {}
