@@ -1,7 +1,7 @@
 use thiserror::Error;
 
-#[derive(Debug, Error)]
-pub enum AuthError {
+#[derive(Debug, Error, Eq, PartialEq)]
+pub enum CredentialError {
     #[error("Invalid email or password")]
     InvalidCredentials,
 
@@ -9,5 +9,8 @@ pub enum AuthError {
     AccountLocked,
 
     #[error("Hashing error {0}")]
-    HashFailed(#[from] bcrypt::BcryptError),
+    HashFailed(String),
+
+    #[error("Credential is not supported")]
+    InvalidCredentialType,
 }

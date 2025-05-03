@@ -14,7 +14,7 @@ pub struct User {
 impl User {
     pub fn register(email: Email, phone_number: PhoneNumber) -> Self {
         let id = UserId::new();
-        let audit_info = AuditInfo::new();
+        let audit_info = AuditInfo::record_creation();
         Self {
             id,
             audit_info,
@@ -27,7 +27,7 @@ impl User {
     pub fn activate(&mut self) -> Result<(), UserError> {
         if matches!(self.status, UserStatus::PendingActivation) {
             self.status = UserStatus::Active;
-            self.audit_info = self.audit_info.record_update();
+            self.audit_info.record_update();
             Ok(())
         } else {
             Err(UserError::InvalidUserStatus(
@@ -38,7 +38,7 @@ impl User {
 
     pub fn deactivate(&mut self) {
         self.status = UserStatus::Inactive;
-        self.audit_info = self.audit_info.record_update();
+        self.audit_info.record_update();
     }
 }
 

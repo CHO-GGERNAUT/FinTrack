@@ -7,9 +7,10 @@ pub struct Email(String);
 
 impl Email {
     pub fn new(value: &str) -> Result<Self, UserError> {
-        match value.validate_email() {
-            Ok(_) => Ok(Self(value.to_owned())),
-            Err(_) => Err(UserError::InvalidEmail),
+        if value.validate_email() {
+            Ok(Self(value.to_owned()))
+        } else {
+            Err(UserError::InvalidEmail)
         }
     }
 

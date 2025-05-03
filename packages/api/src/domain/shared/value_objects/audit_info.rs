@@ -15,11 +15,8 @@ impl AuditInfo {
         }
     }
 
-    pub fn record_update(self) -> Self {
-        AuditInfo {
-            created_at: self.created_at,
-            updated_at: Utc::now(),
-        }
+    pub fn record_update(&mut self) {
+        self.updated_at = Utc::now();
     }
 
     pub fn from_persistent(created_at: DateTime<Utc>, updated_at: DateTime<Utc>) -> Self {
