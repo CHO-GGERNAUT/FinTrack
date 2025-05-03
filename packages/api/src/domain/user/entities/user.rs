@@ -1,7 +1,6 @@
-use crate::domain::shared::value_objects::AuditInfo;
-
 use super::super::errors::UserError;
 use super::super::value_objects::{Email, PhoneNumber, UserId, UserStatus};
+use crate::domain::shared::value_objects::AuditInfo;
 
 #[derive(Debug, Clone)]
 pub struct User {

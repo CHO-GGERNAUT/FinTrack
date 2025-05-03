@@ -1,6 +1,6 @@
 use validator::ValidateEmail;
 
-use super::super::UserError;
+use super::super::errors::UserError;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Email(String);

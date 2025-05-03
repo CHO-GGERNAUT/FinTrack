@@ -1,4 +1,4 @@
-use super::super::UserError;
+use super::super::errors::UserError;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PhoneNumber(String);
