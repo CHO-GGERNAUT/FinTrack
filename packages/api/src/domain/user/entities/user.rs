@@ -5,8 +5,8 @@ use crate::domain::shared::value_objects::AuditInfo;
 #[derive(Debug, Clone)]
 pub struct User {
     id: UserId,
-    audit_info: AuditInfo,
     email: Email,
+    audit_info: AuditInfo,
     phone_number: PhoneNumber,
     status: UserStatus,
 }

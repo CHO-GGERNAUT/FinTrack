@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error, Eq, PartialEq)]
-pub enum CredentialError {
+pub enum PasswordCredentialError {
     #[error("Invalid email or password")]
     InvalidCredentials,
 

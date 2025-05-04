@@ -4,16 +4,16 @@ use chrono::{DateTime, Utc};
 use super::super::errors::CredentialError;
 
 #[derive(Debug, Clone)]
-pub struct Password {
+pub struct PasswordCredential {
     password_hash: String,
     failed_attempt_count: u8,
     password_changed_at: DateTime<Utc>,
 }
 
-impl Password {
+impl PasswordCredential {
     pub fn new(password: &str) -> Result<Self, CredentialError> {
         let password_hash = Self::hash_password(&password)?;
-        Ok(Password {
+        Ok(PasswordCredential {
             password_hash,
             failed_attempt_count: 0,
             password_changed_at: Utc::now(),
