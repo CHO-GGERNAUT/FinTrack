@@ -17,4 +17,6 @@ pub mod value_objects {
     pub use user_status::UserStatus;
 }
 
+pub mod repository;
+
 pub mod errors;

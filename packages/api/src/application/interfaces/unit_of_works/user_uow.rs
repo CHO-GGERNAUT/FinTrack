@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use super::super::repositories::{PasswordCredentialRepository, UserRepository};
+use crate::domain::{
+    password_credential::repository::PasswordCredentialRepository, user::repository::UserRepository,
+};
 
 use super::super::super::errors::RepositoryError;
 

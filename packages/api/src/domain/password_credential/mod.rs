@@ -11,4 +11,6 @@ pub mod value_objects {
     pub use password_hash::PasswordHash;
 }
 
+pub mod repository;
+
 pub mod errors;
