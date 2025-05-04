@@ -1,16 +1,17 @@
+use std::sync::Arc;
+
+use application::interfaces::services::TokenService;
+use axum::middleware;
+use infrastructure::{
+    config::Config, persistence::postgres::connection::create_pool, services::TokenServiceImpl,
+};
+use presentation::rest::middlewares::auth_middleware;
+use tokio::net::TcpListener;
+
 pub mod application;
 pub mod domain;
 pub mod infrastructure;
 pub mod presentation;
-
-use std::sync::Arc;
-
-use application::services::AuthService;
-use axum::middleware;
-use infrastructure::{
-    config::Config, db::create_pool::create_pool, middleware::auth_middleware::auth_middleware,
-    services::auth::AuthServiceImpl,
-};
 
 #[tokio::main]
 async fn main() {
@@ -23,23 +24,25 @@ async fn main() {
         .with_target(false)
         .try_init();
 
-    let pool = create_pool();
-
     #[cfg(feature = "rest")]
     {
         use axum::Extension;
-        use presentation::rest::routes;
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
+        use presentation::rest::v1;
+
+        let token_service: Arc<dyn TokenService> =
+            Arc::new(TokenServiceImpl::new(&config.jwt_secret));
+        let pool = create_pool().expect("Failed to create database pool");
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
             .await
             .unwrap();
-        let auth: Arc<dyn AuthService> = Arc::new(AuthServiceImpl::new(&config.jwt_secret));
+
+        let app = axum::Router::new()
+            .nest("/v1", v1::routes())
+            .layer(middleware::from_fn(auth_middleware))
+            .layer(Extension(pool))
+            .layer(Extension(token_service));
 
         println!("Server started on {:?}", listener.local_addr().unwrap());
-        let app: axum::Router = routes()
-            .layer(middleware::from_fn(auth_middleware))
-            .layer(Extension(auth))
-            .layer(Extension(pool));
-
         match axum::serve(listener, app).await {
             Ok(_) => {
                 tracing::info!("Server Terminated");
@@ -48,9 +51,5 @@ async fn main() {
                 tracing::error!("Server error: {:?}", err);
             }
         }
-    }
-    #[cfg(feature = "grpc")]
-    {
-        unimplemented!("gRPC server not implemented yet");
     }
 }

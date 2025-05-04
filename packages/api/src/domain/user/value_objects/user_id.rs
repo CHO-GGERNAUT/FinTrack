@@ -7,6 +7,10 @@ impl UserId {
     pub fn new() -> Self {
         UserId(Uuid::new_v4())
     }
+
+    pub fn as_deref(&self) -> Uuid {
+        self.0
+    }
 }
 
 impl From<Uuid> for UserId {
@@ -15,9 +19,9 @@ impl From<Uuid> for UserId {
     }
 }
 
-impl Into<Uuid> for UserId {
-    fn into(self) -> Uuid {
-        self.0
+impl From<UserId> for Uuid {
+    fn from(user_id: UserId) -> Self {
+        user_id.0
     }
 }
 

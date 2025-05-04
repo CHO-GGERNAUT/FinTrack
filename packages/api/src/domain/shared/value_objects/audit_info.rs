@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 pub struct AuditInfo {
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
+    deleted_at: Option<DateTime<Utc>>,
 }
 
 impl AuditInfo {
@@ -12,6 +13,7 @@ impl AuditInfo {
         AuditInfo {
             created_at: now,
             updated_at: now,
+            deleted_at: None,
         }
     }
 
@@ -19,10 +21,19 @@ impl AuditInfo {
         self.updated_at = Utc::now();
     }
 
-    pub fn from_persistent(created_at: DateTime<Utc>, updated_at: DateTime<Utc>) -> Self {
+    pub fn record_deletion(&mut self) {
+        self.deleted_at = Some(Utc::now());
+    }
+
+    pub fn from_persistent(
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
+        deleted_at: Option<DateTime<Utc>>,
+    ) -> Self {
         AuditInfo {
             created_at,
             updated_at,
+            deleted_at,
         }
     }
 
@@ -31,5 +42,8 @@ impl AuditInfo {
     }
     pub fn updated_at(&self) -> DateTime<Utc> {
         self.updated_at
+    }
+    pub fn deleted_at(&self) -> Option<DateTime<Utc>> {
+        self.deleted_at
     }
 }

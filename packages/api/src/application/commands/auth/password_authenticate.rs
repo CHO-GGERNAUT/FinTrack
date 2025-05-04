@@ -1,11 +1,15 @@
 use crate::{
-    application::{errors::ApplicationError, interfaces::unit_of_works::UserUnitOfWorkFactory},
-    domain::user::value_objects::Email,
+    application::{errors::ApplicationError, interfaces::unit_of_works::UserUnitOfWork},
+    domain::{
+        password_credential::repository::PasswordCredentialRepository,
+        user::{repository::UserRepository, value_objects::Email},
+    },
 };
 
 use super::super::super::interfaces::services::TokenService;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct PasswordAuthenticateCommand {
     pub email: String,
     pub password: String,
@@ -16,53 +20,41 @@ pub struct PasswordAuthenticateResult {
     pub refresh_token: String,
 }
 
-pub struct PasswordAuthenticateHandler {
-    user_uow_factory: Arc<dyn UserUnitOfWorkFactory>,
+pub struct PasswordAuthenticateHandler<U: UserUnitOfWork> {
+    uow: U,
     token_service: Arc<dyn TokenService>,
 }
 
-impl PasswordAuthenticateHandler {
-    pub fn new(
-        user_uow_factory: Arc<dyn UserUnitOfWorkFactory>,
-        token_service: Arc<dyn TokenService>,
-    ) -> Self {
-        Self {
-            user_uow_factory,
-            token_service,
-        }
+impl<U: UserUnitOfWork> PasswordAuthenticateHandler<U> {
+    pub fn new(uow: U, token_service: Arc<dyn TokenService>) -> Self {
+        Self { uow, token_service }
     }
 
     pub async fn execute(
-        &self,
+        mut self,
         command: PasswordAuthenticateCommand,
     ) -> Result<PasswordAuthenticateResult, ApplicationError> {
-        let uow = self.user_uow_factory.begin().await?;
-
+        tracing::debug!("Command: {:?}", command);
         let email = Email::new(&command.email)?;
 
-        let user_repo = uow.user_repository();
-        let password_repo = uow.password_credential_repository();
-
-        let user = user_repo.find_user_by_email(&email).await.ok_or_else(|| {
-            ApplicationError::AuthenticationFailed(format!("User not found: {email}"))
-        })?;
+        let user = self.uow.user_repository().find_by_email(&email).await?;
+        tracing::debug!("User: {:?}", user);
         let user_id = user.id().clone();
 
-        let mut credential = password_repo
+        let mut credential = self
+            .uow
+            .password_credential_repository()
             .find_by_user_id(*user.id())
-            .await
-            .ok_or_else(|| {
-                ApplicationError::AuthenticationFailed(format!(
-                    "Credential not found for user: {}",
-                    user_id
-                ))
-            })?;
-
+            .await?;
+        tracing::debug!("Credential: {:?}", credential);
         let verification_result = credential.verify_password(&command.password);
-        password_repo.update(credential).await?;
+        tracing::debug!("Verification result: {:?}", verification_result);
+        self.uow
+            .password_credential_repository()
+            .update(credential)
+            .await?;
 
-        uow.commit().await?;
-
+        self.uow.commit().await?;
         match verification_result {
             Ok(_) => {
                 let access_token = self.token_service.issue_access_token(user_id.into())?;

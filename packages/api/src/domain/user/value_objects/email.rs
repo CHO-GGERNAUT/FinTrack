@@ -17,6 +17,10 @@ impl Email {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub fn from_persistent(value: &str) -> Self {
+        Self(value.to_string())
+    }
 }
 
 impl std::fmt::Display for Email {

@@ -1,6 +1,3 @@
-use axum::Router;
-mod v1;
+pub mod middlewares;
 
-pub fn routes() -> Router {
-    Router::new().nest("/v1", v1::routes())
-}
+pub mod v1;

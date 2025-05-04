@@ -2,7 +2,7 @@
 use thiserror::Error;
 
 use super::RepositoryError;
-use crate::application::interfaces::services::TokenServiceError;
+use crate::application::interfaces::services::token_service::TokenServiceError;
 use crate::domain::password_credential::errors::PasswordCredentialError;
 use crate::domain::user::errors::UserError;
 

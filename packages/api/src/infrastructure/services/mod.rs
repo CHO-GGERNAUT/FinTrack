@@ -1,1 +1,2 @@
-pub mod auth;
+mod token_service;
+pub use token_service::TokenServiceImpl;

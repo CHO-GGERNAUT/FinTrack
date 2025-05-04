@@ -8,9 +8,9 @@ use crate::{
 
 #[async_trait::async_trait]
 pub trait UserRepository {
-    async fn create(&self, user: User) -> Result<User, RepositoryError>;
-    async fn find_user_by_id(&self, id: UserId) -> Option<User>;
-    async fn find_user_by_email(&self, email: &Email) -> Option<User>;
-    async fn update(&self, user: User) -> Result<User, RepositoryError>;
-    async fn delete(&self, id: UserId) -> Result<bool, RepositoryError>;
+    async fn create(&mut self, user: User) -> Result<User, RepositoryError>;
+    async fn find_by_id(&mut self, id: UserId) -> Result<User, RepositoryError>;
+    async fn find_by_email(&mut self, email: &Email) -> Result<User, RepositoryError>;
+    async fn update(&mut self, user: User) -> Result<User, RepositoryError>;
+    async fn delete(&mut self, id: UserId) -> Result<bool, RepositoryError>;
 }

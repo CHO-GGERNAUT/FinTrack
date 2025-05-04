@@ -40,6 +40,22 @@ impl User {
         self.status = UserStatus::Inactive;
         self.audit_info.record_update();
     }
+
+    pub fn from_persistent(
+        id: UserId,
+        email: Email,
+        phone_number: PhoneNumber,
+        status: UserStatus,
+        audit_info: AuditInfo,
+    ) -> Self {
+        Self {
+            id,
+            email,
+            phone_number,
+            status,
+            audit_info,
+        }
+    }
 }
 
 //getters
@@ -58,5 +74,9 @@ impl User {
 
     pub fn status(&self) -> &UserStatus {
         &self.status
+    }
+
+    pub fn audit_info(&self) -> &AuditInfo {
+        &self.audit_info
     }
 }

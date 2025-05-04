@@ -18,9 +18,21 @@ pub enum RepositoryError {
     #[error("Unauthorized access: {details}")]
     Unauthorized { details: String },
 
+    #[error("Invalid data: {source}")]
+    InvalidData {
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
+
     #[error("Unexpected error during {operation}")]
     Unexpected {
         operation: &'static str, // The operation during which the error occurred.
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
+
+    #[error("Database transaction error: {source}")]
+    DatabaseError {
         #[source]
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },

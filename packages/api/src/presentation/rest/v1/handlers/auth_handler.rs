@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     Extension, Json,
     http::{StatusCode, header::SET_COOKIE},
@@ -6,27 +8,35 @@ use axum::{
 use sqlx::PgPool;
 
 use crate::{
-    application::{dto::IssueTokenInput, query::auth::IssueTokenUsecase},
+    application::commands::auth::PasswordAuthenticateHandler,
     infrastructure::{
-        config::Config, db::repositories::UserRepositoryPostgresPool,
-        services::auth::AuthServiceImpl,
+        config::Config, persistence::postgres::unit_of_works::UserUnitOfWorkPg,
+        services::TokenServiceImpl,
     },
-    presentation::schemas::user::LoginRequest,
+    presentation::rest::v1::schemas::auth::LoginRequest,
 };
 
 pub async fn login_handler(
     Extension(pool): Extension<PgPool>,
     Json(req): Json<LoginRequest>,
 ) -> Result<Response, (StatusCode, String)> {
-    let auth = AuthServiceImpl::new(&Config::get().jwt_secret);
-    let usecase = IssueTokenUsecase::new(UserRepositoryPostgresPool::new(pool), auth);
+    let token_service = Arc::new(TokenServiceImpl::new(&Config::get().jwt_secret));
+    // let auth = AuthServiceImpl::new(&Config::get().jwt_secret);
+    let uow = UserUnitOfWorkPg::new(pool).await.map_err(|e| {
+        tracing::error!("Failed to create user unit of work: {}", e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Internal server error".to_string(),
+        )
+    })?;
+    let handler = PasswordAuthenticateHandler::new(uow, token_service);
 
-    let output = usecase
-        .execute(IssueTokenInput::from(req))
+    let output = handler
+        .execute(req.into())
         .await
         .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
 
-    let cookie = cookie::CookieBuilder::new("auth_token", output.token)
+    let cookie = cookie::CookieBuilder::new("access_token", output.access_token)
         .path("/")
         .http_only(true)
         .same_site(cookie::SameSite::Lax)

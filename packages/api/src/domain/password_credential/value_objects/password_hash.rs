@@ -14,6 +14,7 @@ impl PasswordHash {
     }
 
     pub fn verify(&self, provided_password: &str) -> Result<(), PasswordCredentialError> {
+        tracing::debug!("Verifying password hash {}", self.hash);
         bcrypt::verify(provided_password, &self.hash)
             .map_err(|e| PasswordCredentialError::HashFailed(e.to_string()))
             .and_then(|is_valid| {
@@ -25,6 +26,12 @@ impl PasswordHash {
             })
     }
 
+    pub fn from_persistent(hash: &str) -> Self {
+        Self {
+            hash: hash.to_string(),
+        }
+    }
+
     pub fn update_hash(&mut self, new_password: &str) -> Result<(), PasswordCredentialError> {
         self.hash = Self::hash(new_password)?;
         Ok(())
@@ -34,5 +41,11 @@ impl PasswordHash {
     fn hash(password: &str) -> Result<String, PasswordCredentialError> {
         hash(password, bcrypt::DEFAULT_COST)
             .map_err(|e| PasswordCredentialError::HashFailed(e.to_string()))
+    }
+}
+
+impl std::fmt::Display for PasswordHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.hash)
     }
 }

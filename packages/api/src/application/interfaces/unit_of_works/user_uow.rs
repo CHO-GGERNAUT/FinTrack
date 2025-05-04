@@ -1,21 +1,19 @@
-use std::sync::Arc;
-
-use async_trait::async_trait;
-
 use crate::domain::{
     password_credential::repository::PasswordCredentialRepository, user::repository::UserRepository,
 };
 
-use super::super::super::errors::RepositoryError;
+use super::UnitOfWork;
 
-#[async_trait]
-pub trait UserUnitOfWork {
-    fn user_repository(&self) -> Arc<dyn UserRepository>;
-    fn password_credential_repository(&self) -> Arc<dyn PasswordCredentialRepository>;
-    async fn commit(self: Box<Self>) -> Result<(), RepositoryError>;
-}
+#[async_trait::async_trait]
+pub trait UserUnitOfWork: UnitOfWork {
+    type UserRepo<'a>: UserRepository
+    where
+        Self: 'a;
 
-#[async_trait]
-pub trait UserUnitOfWorkFactory {
-    async fn begin(&self) -> Result<Box<dyn UserUnitOfWork>, RepositoryError>;
+    type PasswordCredentialRepo<'a>: PasswordCredentialRepository
+    where
+        Self: 'a;
+
+    fn user_repository(&mut self) -> Self::UserRepo<'_>;
+    fn password_credential_repository(&mut self) -> Self::PasswordCredentialRepo<'_>;
 }
