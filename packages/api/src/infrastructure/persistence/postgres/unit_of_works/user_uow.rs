@@ -17,8 +17,8 @@ pub struct UserUnitOfWorkPg {
 }
 
 impl UserUnitOfWorkPg {
-    pub async fn new(pool: PgPool) -> Result<Self, sqlx::Error> {
-        let tx = pool.begin().await?;
+    pub async fn new(pool: PgPool) -> Result<Self, RepositoryError> {
+        let tx = pool.begin().await.map_err(|e| RepositoryError::db(e))?;
         Ok(Self {
             base: BaseUnitOfWorkPg::new(tx),
         })

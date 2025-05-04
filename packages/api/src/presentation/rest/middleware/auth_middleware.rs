@@ -32,7 +32,7 @@ pub async fn auth_middleware(
             let cookie_str = cookie_header.to_str().unwrap_or("");
             for cookie in cookie_str.split(';') {
                 if let Ok(cookie) = Cookie::parse(cookie.trim()) {
-                    if cookie.name() == "auth_token" {
+                    if cookie.name() == "access_token" {
                         token = Some(cookie.value().to_string());
                         break;
                     }

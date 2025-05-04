@@ -5,7 +5,7 @@ use axum::middleware;
 use infrastructure::{
     config::Config, persistence::postgres::connection::create_pool, services::TokenServiceImpl,
 };
-use presentation::rest::middlewares::auth_middleware;
+use presentation::rest::middleware::auth_middleware;
 use tokio::net::TcpListener;
 
 pub mod application;
