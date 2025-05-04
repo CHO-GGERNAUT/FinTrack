@@ -10,7 +10,7 @@ impl Email {
         if value.validate_email() {
             Ok(Self(value.to_owned()))
         } else {
-            Err(UserError::InvalidEmail)
+            Err(UserError::InvalidEmail(value.to_string()))
         }
     }
 

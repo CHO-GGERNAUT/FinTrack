@@ -46,7 +46,6 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
         .fetch_one(tx)
         .await
         .map_err(|e| {
-            tracing::error!("DB error: {}", e);
             RepositoryError::Conflict { entity_type: ENTITY_TYPE, details: e.to_string() }
         })?;
         Ok(result.into())
@@ -63,11 +62,9 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
             "#,
             email.as_str(),
         ).fetch_optional(tx).await.map_err(|e| {
-            tracing::error!("DB error: {}", e);
-            RepositoryError::NotFound { entity_type: ENTITY_TYPE, id: email.as_str().to_string() }
+            RepositoryError::db(e)
         })?;
         if result.is_none() {
-            tracing::error!("User not found with email: {}", email.as_str());
             return Err(RepositoryError::NotFound {
                 entity_type: ENTITY_TYPE,
                 id: email.as_str().to_string(),
@@ -88,11 +85,17 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
                 WHERE id = $1 AND deleted_at IS NULL
             "#,
             id,
-        ).fetch_one(tx).await.map_err(|e| {
-            tracing::error!("DB error: {}", e);
-            RepositoryError::NotFound { entity_type: ENTITY_TYPE, id: id.to_string() }
+        ).fetch_optional(tx).await.map_err(|e| {
+            RepositoryError::db(e)
         })?;
-        Ok(result.into())
+        if result.is_none() {
+            return Err(RepositoryError::NotFound {
+                entity_type: ENTITY_TYPE,
+                id: id.to_string(),
+            });
+        }
+
+        Ok(result.unwrap().into())
     }
     async fn update(&mut self, user: User) -> Result<User, RepositoryError> {
         let tx = self.tx.as_mut();
@@ -110,8 +113,7 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
             user.audit_info().updated_at(),
             Into::<Uuid>::into(*user.id()),
         ).fetch_one(tx).await.map_err(|e| {
-            tracing::error!("DB error: {}", e);
-            RepositoryError::NotFound { entity_type: ENTITY_TYPE, id: user.id().to_string() }
+            RepositoryError::db(e)
         })?;
         Ok(result.into())
     }
@@ -130,13 +132,7 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
         )
         .execute(tx)
         .await
-        .map_err(|e| {
-            tracing::error!("DB error: {}", e);
-            RepositoryError::NotFound {
-                entity_type: ENTITY_TYPE,
-                id: id.to_string(),
-            }
-        })?;
+        .map_err(|e| RepositoryError::db(e))?;
         Ok(result.rows_affected() > 0)
     }
 }

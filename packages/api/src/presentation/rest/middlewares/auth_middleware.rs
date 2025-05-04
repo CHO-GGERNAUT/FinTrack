@@ -16,7 +16,6 @@ pub async fn auth_middleware(
     mut request: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    tracing::debug!("Auth middleware triggered");
     let mut token = request
         .headers()
         .get(header::AUTHORIZATION)
@@ -47,7 +46,6 @@ pub async fn auth_middleware(
             return Ok(next.run(request).await);
         }
     }
-    tracing::debug!("Token verification failed");
     request.extensions_mut().insert(None::<Claims>);
     Ok(next.run(request).await)
 }

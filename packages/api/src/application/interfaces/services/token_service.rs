@@ -15,13 +15,13 @@ pub trait TokenService: Send + Sync + 'static {
 
 #[derive(Error, Debug)]
 pub enum TokenServiceError {
-    #[error("Token creation error {source}")]
+    #[error("Token createion Error({operation}):  {source}")]
     TokenCreationError {
         operation: &'static str,
         #[source]
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
-    #[error("Token validation error {source}")]
+    #[error("Token validation Error({operation}):  {source}")]
     TokenValidationError {
         operation: &'static str,
         #[source]
@@ -31,13 +31,23 @@ pub enum TokenServiceError {
     UnknownError(String),
 }
 
-// impl std::fmt::Display for TokenServiceError {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             TokenServiceError::TokenCreationError => write!(f, "Token creation error"),
-//             TokenServiceError::TokenValidationError => write!(f, "Token validation error"),
-//             TokenServiceError::TokenExpired => write!(f, "Token expired"),
-//             TokenServiceError::UnknownError(msg) => write!(f, "Unknown error: {}", msg),
-//         }
-//     }
-// }
+impl TokenServiceError {
+    pub fn token_creation_error<E>(operation: &'static str, err: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        TokenServiceError::TokenCreationError {
+            operation,
+            source: Box::new(err),
+        }
+    }
+    pub fn token_validation_error<E>(operation: &'static str, err: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        TokenServiceError::TokenValidationError {
+            operation,
+            source: Box::new(err),
+        }
+    }
+}

@@ -1,7 +1,10 @@
 use uuid::Uuid;
 
 use crate::{
-    application::{errors::ApplicationError, interfaces::unit_of_works::UserUnitOfWork},
+    application::{
+        errors::{ApplicationError, RepositoryError},
+        interfaces::unit_of_works::UserUnitOfWork,
+    },
     domain::{
         password_credential::{
             entities::PasswordCredential, repository::PasswordCredentialRepository,
@@ -46,7 +49,11 @@ impl<U: UserUnitOfWork> RegisterUserPasswordHandler<U> {
             .await
             .is_ok()
         {
-            return Err(ApplicationError::UserAlreadyExists(command.email));
+            return Err(RepositoryError::Conflict {
+                entity_type: "User",
+                details: format!("Email already exists: {}", command.email),
+            }
+            .into());
         }
 
         let phone_number = PhoneNumber::new(&command.phone_number)?;

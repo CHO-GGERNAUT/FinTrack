@@ -30,13 +30,8 @@ impl TokenService for TokenServiceImpl {
             &claims,
             &EncodingKey::from_secret(self.secret.as_bytes()),
         )
-        .map_err(|e| {
-            tracing::error!("Token Create Failed {e}");
-            TokenServiceError::TokenCreationError {
-                operation: "issue_access_token",
-                source: Box::new(e),
-            }
-        })?;
+        .map_err(|e| TokenServiceError::token_validation_error("issue_access_token", e))?;
+
         Ok(token)
     }
 
@@ -51,10 +46,7 @@ impl TokenService for TokenServiceImpl {
             &claims,
             &EncodingKey::from_secret(self.secret.as_bytes()),
         )
-        .map_err(|e| TokenServiceError::TokenCreationError {
-            operation: "issue_refresh_token",
-            source: Box::new(e),
-        })?;
+        .map_err(|e| TokenServiceError::token_validation_error("issue_refresh_token", e))?;
         Ok(token)
     }
 
@@ -64,10 +56,7 @@ impl TokenService for TokenServiceImpl {
             &DecodingKey::from_secret(self.secret.as_bytes()),
             &Validation::default(),
         )
-        .map_err(|e| TokenServiceError::TokenValidationError {
-            operation: "verify_token",
-            source: Box::new(e),
-        })?;
+        .map_err(|e| TokenServiceError::token_validation_error("veritfy_token", e))?;
         Ok(token_data.claims)
     }
 }

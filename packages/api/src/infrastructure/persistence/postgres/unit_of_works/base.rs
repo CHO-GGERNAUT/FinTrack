@@ -17,17 +17,13 @@ impl BaseUnitOfWorkPg {
 
     pub async fn commit(mut self) -> Result<(), RepositoryError> {
         if let Some(tx) = self.tx.take() {
-            tx.commit()
-                .await
-                .map_err(|e| RepositoryError::DatabaseError {
-                    source: Box::new(e),
-                })?;
+            tx.commit().await.map_err(|e| RepositoryError::db(e))?;
             Ok(())
         } else {
-            Err(RepositoryError::Unexpected {
-                operation: "Commit",
-                source: Box::new(sqlx::Error::PoolClosed),
-            })
+            Err(RepositoryError::unexpected(
+                "Commit",
+                sqlx::Error::PoolClosed,
+            ))
         }
     }
 }

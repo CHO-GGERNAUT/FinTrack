@@ -2,7 +2,7 @@ use bcrypt::hash;
 
 use crate::domain::password_credential::errors::PasswordCredentialError;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PasswordHash {
     hash: String,
 }
@@ -14,7 +14,6 @@ impl PasswordHash {
     }
 
     pub fn verify(&self, provided_password: &str) -> Result<(), PasswordCredentialError> {
-        tracing::debug!("Verifying password hash {}", self.hash);
         bcrypt::verify(provided_password, &self.hash)
             .map_err(|e| PasswordCredentialError::HashFailed(e.to_string()))
             .and_then(|is_valid| {
@@ -46,6 +45,14 @@ impl PasswordHash {
 
 impl std::fmt::Display for PasswordHash {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hash)
+        write!(f, "PasswordHash(*****)")
+    }
+}
+
+impl std::fmt::Debug for PasswordHash {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PasswordHash")
+            .field("hash", &"<redacted>") // 필드 값을 "<redacted>" 로 표시
+            .finish()
     }
 }

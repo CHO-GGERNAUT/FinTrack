@@ -1,74 +1,86 @@
-// src/application/error.rs (예시 경로)
-use thiserror::Error;
-
 use super::RepositoryError;
 use crate::application::interfaces::services::token_service::TokenServiceError;
 use crate::domain::password_credential::errors::PasswordCredentialError;
 use crate::domain::user::errors::UserError;
+use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ApplicationError {
     #[error("Validation Error: {0}")]
-    ValidationError(String),
+    Validation(String),
 
-    #[error("User Already Exists: {0}")]
-    UserAlreadyExists(String),
-
-    #[error("Authentication Failed: {0}")]
-    AuthenticationFailed(String),
-
-    #[error("Authorization Failed: {0}")]
-    AuthorizationFailed(String),
-
-    #[error("Resource Not Found: {0}")]
+    #[error("Not Found: {0}")]
     NotFound(String),
 
-    #[error("Domain Rule Violation: {source}")]
-    DomainError {
-        #[from]
-        source: DomainErrorWrapper, // 도메인 오류들을 감싸는 래퍼
+    #[error("Conflict: {0}")]
+    Conflict(String),
+
+    #[error("Authentication Error: {0}")]
+    Authentication(String),
+
+    #[error("Authorization Error: {0}")]
+    Authorization(String),
+
+    #[error("Internal Server Error")]
+    InternalError {
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
+}
 
-    #[error("Repository Error: {source}")]
-    RepositoryError {
-        #[from]
-        source: RepositoryError, // RepositoryError 직접 포함
-    },
+impl ApplicationError {
+    pub fn internal<E>(err: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        ApplicationError::InternalError {
+            source: Box::new(err),
+        }
+    }
+}
 
-    #[error("Token Generation Error: {0}")]
-    TokenError(String),
-
-    #[error("Unexpected Application Error: {0}")]
-    Unexpected(String),
-    // 다른 필요한 애플리케이션 레벨 오류 추가 가능
+impl From<RepositoryError> for ApplicationError {
+    fn from(err: RepositoryError) -> Self {
+        match err {
+            RepositoryError::NotFound { .. } => ApplicationError::NotFound(err.to_string()),
+            RepositoryError::Conflict { .. } => ApplicationError::Conflict(err.to_string()),
+            _ => ApplicationError::internal(err),
+        }
+    }
 }
 
 impl From<TokenServiceError> for ApplicationError {
     fn from(err: TokenServiceError) -> Self {
-        ApplicationError::TokenError(err.to_string())
+        match err {
+            TokenServiceError::TokenValidationError { .. } => {
+                ApplicationError::Authentication(err.to_string())
+            }
+            _ => ApplicationError::internal(err),
+        }
     }
-}
-
-#[derive(Error, Debug)]
-pub enum DomainErrorWrapper {
-    #[error("{0}")]
-    User(#[from] UserError),
-    #[error("{0}")]
-    PasswordCredential(#[from] PasswordCredentialError),
-    // 다른 도메인 오류 타입 추가 가능
 }
 
 impl From<UserError> for ApplicationError {
     fn from(err: UserError) -> Self {
-        ApplicationError::DomainError {
-            source: DomainErrorWrapper::User(err),
+        match err {
+            UserError::NotFound(_) => ApplicationError::NotFound(err.to_string()),
+            UserError::Conflict(_) => ApplicationError::Conflict(err.to_string()),
+            UserError::InvalidEmail(_)
+            | UserError::InvalidPhoneNumber(_)
+            | UserError::InvalidUserStatus(_) => ApplicationError::Validation(err.to_string()),
+            _ => ApplicationError::internal(err),
         }
     }
 }
+
 impl From<PasswordCredentialError> for ApplicationError {
     fn from(err: PasswordCredentialError) -> Self {
-        ApplicationError::DomainError {
-            source: DomainErrorWrapper::PasswordCredential(err),
+        match err {
+            PasswordCredentialError::InvalidCredentials => {
+                ApplicationError::Authentication(err.to_string())
+            }
+            PasswordCredentialError::HashFailed(_) => ApplicationError::internal(err),
+            _ => ApplicationError::internal(err),
         }
     }
 }

@@ -34,11 +34,9 @@ impl<U: UserUnitOfWork> PasswordAuthenticateHandler<U> {
         mut self,
         command: PasswordAuthenticateCommand,
     ) -> Result<PasswordAuthenticateResult, ApplicationError> {
-        tracing::debug!("Command: {:?}", command);
         let email = Email::new(&command.email)?;
 
         let user = self.uow.user_repository().find_by_email(&email).await?;
-        tracing::debug!("User: {:?}", user);
         let user_id = user.id().clone();
 
         let mut credential = self
@@ -46,9 +44,7 @@ impl<U: UserUnitOfWork> PasswordAuthenticateHandler<U> {
             .password_credential_repository()
             .find_by_user_id(*user.id())
             .await?;
-        tracing::debug!("Credential: {:?}", credential);
         let verification_result = credential.verify_password(&command.password);
-        tracing::debug!("Verification result: {:?}", verification_result);
         self.uow
             .password_credential_repository()
             .update(credential)
