@@ -21,8 +21,11 @@ const MAX_FAILED_ATTEMPTS: u8 = 5;
 
 // External methods
 impl PasswordCredential {
-    pub fn new(user_id: UserId, plane_password: &str) -> Result<Self, PasswordCredentialError> {
-        let password_hash = PasswordHash::new(plane_password)?;
+    pub fn new(
+        user_id: UserId,
+        password_hash: PasswordHash,
+    ) -> Result<Self, PasswordCredentialError> {
+        // let password_hash = PasswordHash::new(plane_password)?;
         Ok(Self {
             id: PasswordCredentialId::new(),
             user_id,

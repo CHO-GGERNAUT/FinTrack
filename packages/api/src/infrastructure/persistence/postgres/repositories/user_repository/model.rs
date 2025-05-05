@@ -28,7 +28,6 @@ pub enum UserStatusDb {
     Active,
     Inactive,
     PendingActivation,
-    Suspended,
 }
 
 impl From<User> for UserRow {
@@ -59,7 +58,6 @@ impl From<UserRow> for User {
 impl From<UserStatusDb> for UserStatus {
     fn from(status: UserStatusDb) -> Self {
         match status {
-            UserStatusDb::Suspended => Self::Suspended,
             UserStatusDb::Active => Self::Active,
             UserStatusDb::Inactive => Self::Inactive,
             UserStatusDb::PendingActivation => Self::PendingActivation,
@@ -69,7 +67,6 @@ impl From<UserStatusDb> for UserStatus {
 impl From<UserStatus> for UserStatusDb {
     fn from(status: UserStatus) -> Self {
         match status {
-            UserStatus::Suspended => Self::Suspended,
             UserStatus::Active => Self::Active,
             UserStatus::Inactive => Self::Inactive,
             UserStatus::PendingActivation => Self::PendingActivation,

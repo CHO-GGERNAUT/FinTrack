@@ -3,5 +3,4 @@ pub enum UserStatus {
     PendingActivation,
     Active,
     Inactive,
-    Suspended,
 }

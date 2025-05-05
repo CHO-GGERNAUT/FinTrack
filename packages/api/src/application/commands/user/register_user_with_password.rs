@@ -8,6 +8,7 @@ use crate::{
     domain::{
         password_credential::{
             entities::PasswordCredential, repository::PasswordCredentialRepository,
+            value_objects::PasswordHash,
         },
         user::{
             entities::User,
@@ -60,8 +61,8 @@ impl<U: UserUnitOfWork> RegisterUserPasswordHandler<U> {
         let user = User::register(email, phone_number);
         let user_id = user.id().clone();
         self.uow.user_repository().create(user).await?;
-
-        let credential = PasswordCredential::new(user_id, &command.password)?;
+        let password_hash = PasswordHash::new(&command.password)?;
+        let credential = PasswordCredential::new(user_id, password_hash)?;
         self.uow
             .password_credential_repository()
             .create(credential)

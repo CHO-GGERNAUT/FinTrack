@@ -79,6 +79,9 @@ impl From<PasswordCredentialError> for ApplicationError {
             PasswordCredentialError::InvalidCredentials => {
                 ApplicationError::Authentication(err.to_string())
             }
+            PasswordCredentialError::AccountLocked => {
+                ApplicationError::Authorization(err.to_string())
+            }
             PasswordCredentialError::HashFailed(_) => ApplicationError::internal(err),
             _ => ApplicationError::internal(err),
         }
