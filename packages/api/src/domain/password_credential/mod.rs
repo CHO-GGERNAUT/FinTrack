@@ -8,7 +8,7 @@ pub mod value_objects {
     pub use password_credential_id::PasswordCredentialId;
 
     mod password_hash;
-    pub use password_hash::PasswordHash;
+    pub use password_hash::*;
 }
 
 pub mod repository;

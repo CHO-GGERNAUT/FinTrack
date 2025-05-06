@@ -1,15 +1,14 @@
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 
-use crate::application::interfaces::services::{
-    TokenService,
-    token_service::{Claims, TokenServiceError},
+use crate::application::interfaces::services::token_service::{
+    Claims, TokenService, TokenServiceError,
 };
 #[derive(Clone)]
-pub struct TokenServiceImpl {
+pub struct JwtService {
     pub secret: String,
 }
 
-impl TokenServiceImpl {
+impl JwtService {
     pub fn new(secret: &str) -> Self {
         Self {
             secret: secret.to_string(),
@@ -19,7 +18,7 @@ impl TokenServiceImpl {
 
 type Result<T> = std::result::Result<T, TokenServiceError>;
 
-impl TokenService for TokenServiceImpl {
+impl TokenService for JwtService {
     fn issue_access_token(&self, user_id: uuid::Uuid) -> Result<String> {
         let claims = Claims {
             sub: user_id.to_string(),

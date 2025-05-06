@@ -9,7 +9,7 @@ use axum::{
 };
 use cookie::Cookie;
 
-use crate::application::interfaces::services::{TokenService, token_service::Claims};
+use crate::application::interfaces::services::token_service::{Claims, TokenService};
 
 pub async fn auth_middleware(
     Extension(auth): Extension<Arc<dyn TokenService>>,

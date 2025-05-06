@@ -13,7 +13,7 @@ pub enum CardBrand {
 
 #[derive(Debug, Error)]
 pub enum CardBrandError {
-    #[error("Invalid card network string: {0}")]
+    #[error("Invalid card brand string: {0}")]
     InvalidString(String),
 }
 

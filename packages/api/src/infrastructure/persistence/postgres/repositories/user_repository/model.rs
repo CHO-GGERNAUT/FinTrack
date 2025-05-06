@@ -3,12 +3,15 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::{FromRow, Type};
 use uuid::Uuid;
 
-use crate::domain::{
-    shared::value_objects::AuditInfo,
-    user::{
-        entities::User,
-        value_objects::{Email, PhoneNumber, UserId, UserStatus},
+use crate::{
+    domain::{
+        shared::value_objects::AuditInfo,
+        user::{
+            entities::User,
+            value_objects::{Email, PhoneNumber, UserId, UserStatus},
+        },
     },
+    infrastructure::persistence::errors::InfraError,
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -44,15 +47,22 @@ impl From<User> for UserRow {
     }
 }
 
-impl From<UserRow> for User {
-    fn from(row: UserRow) -> Self {
+impl TryFrom<UserRow> for User {
+    type Error = InfraError;
+    fn try_from(row: UserRow) -> Result<Self, Self::Error> {
         let id = UserId::from(row.id);
-        let email = Email::from_persistent(&row.email);
+        let email = Email::try_from(row.email)?;
 
-        let phone_number = PhoneNumber::from_persistent(&row.phone_number);
+        let phone_number = PhoneNumber::try_from(row.phone_number)?;
         let status = UserStatus::from(row.status);
-        let audit_info = AuditInfo::from_persistent(row.created_at, row.updated_at, row.deleted_at);
-        User::from_persistent(id, email, phone_number, status, audit_info)
+        let audit_info = AuditInfo::new(row.created_at, row.updated_at, row.deleted_at);
+        Ok(User::reconstitute(
+            id,
+            email,
+            phone_number,
+            status,
+            audit_info,
+        ))
     }
 }
 impl From<UserStatusDb> for UserStatus {

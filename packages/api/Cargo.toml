@@ -26,8 +26,10 @@ tonic = { version = "0.13.0", optional = true }
 bcrypt = "0.17.0"
 ring = "0.17.14"
 thiserror = "2.0.12"
-validator = { version  = "0.20.0", features = ["derive"] }
-
+validator = { version = "0.20.0", features = ["derive"] }
+aes-gcm = { version = "0.10.3" }
+hex = "0.4.3"
+sha3 = { version = "0.10.8" }
 [features]
 default = ["rest"]
 rest = ["axum"]

@@ -6,6 +6,7 @@ pub struct Config {
     pub database_url: String,
     pub server_port: u16,
     pub jwt_secret: String,
+    pub encryption_key: String,
 }
 
 impl Config {
@@ -18,6 +19,8 @@ impl Config {
                 .unwrap_or(3000),
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "your_default_secret_key".to_string()),
+            encryption_key: env::var("ENCRYPTION_KEY_HEX")
+                .unwrap_or_else(|_| "your_default_encryption_key".to_string()),
         }
     }
 

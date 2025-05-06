@@ -1,45 +1,34 @@
-use bcrypt::hash;
-
-use crate::domain::password_credential::errors::PasswordCredentialError;
+use crate::domain::shared::{errors::DomainValidationRuleError, services::Verifier};
 
 #[derive(Clone)]
 pub struct PasswordHash {
-    hash: String,
+    hash: String, // Stores the actual hash string
 }
+
 impl PasswordHash {
-    pub fn new(plane_password: &str) -> Result<Self, PasswordCredentialError> {
-        Ok(Self {
-            hash: Self::hash(plane_password)?,
-        })
-    }
-
-    pub fn verify(&self, provided_password: &str) -> Result<(), PasswordCredentialError> {
-        bcrypt::verify(provided_password, &self.hash)
-            .map_err(|e| PasswordCredentialError::HashFailed(e.to_string()))
-            .and_then(|is_valid| {
-                if is_valid {
-                    Ok(())
-                } else {
-                    Err(PasswordCredentialError::InvalidCredentials)
-                }
-            })
-    }
-
-    pub fn from_persistent(hash: &str) -> Self {
-        Self {
-            hash: hash.to_string(),
+    fn new(hash: String) -> Result<Self, DomainValidationRuleError> {
+        if hash.is_empty() {
+            return Err(DomainValidationRuleError::InvalidHashFormat(
+                "Hash cannot be empty".to_string(),
+            ));
         }
+        Ok(Self { hash })
     }
 
-    pub fn update_hash(&mut self, new_password: &str) -> Result<(), PasswordCredentialError> {
-        self.hash = Self::hash(new_password)?;
-        Ok(())
+    pub fn verify(&self, plain_password: &str, verifier: &impl Verifier) -> bool {
+        verifier.verify(plain_password, &self.hash)
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.hash
     }
 }
-impl PasswordHash {
-    fn hash(password: &str) -> Result<String, PasswordCredentialError> {
-        hash(password, bcrypt::DEFAULT_COST)
-            .map_err(|e| PasswordCredentialError::HashFailed(e.to_string()))
+
+impl TryFrom<String> for PasswordHash {
+    type Error = DomainValidationRuleError;
+
+    fn try_from(hash: String) -> Result<Self, Self::Error> {
+        PasswordHash::new(hash)
     }
 }
 

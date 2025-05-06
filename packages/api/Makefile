@@ -9,6 +9,9 @@ BUILD_ENV = DATABASE_URL=$(DATABASE_URL) RUST_LOG=$(RUST_LOG) RUST_BACKTRACE=1
 migration:
 	sqlx migrate run --database-url $(DATABASE_URL) --source $(MIGRATE_SOURCE)
 
+add-migrate:
+	cargo sqlx migrate add -s --source $(MIGRATE_SOURCE) "$(NAME)"
+
 prepare:
 	cargo sqlx prepare --database-url $(DATABASE_URL) --workspace
 

@@ -1,4 +1,10 @@
-use crate::domain::{shared::value_objects::AuditInfo, user::value_objects::UserId};
+use crate::domain::{
+    shared::{
+        services::{Hasher, Verifier},
+        value_objects::AuditInfo,
+    },
+    user::value_objects::UserId,
+};
 
 use super::super::{
     errors::PasswordCredentialError,
@@ -40,12 +46,16 @@ impl PasswordCredential {
 }
 
 impl PasswordCredential {
-    pub fn verify_password(&mut self, password: &str) -> Result<(), PasswordCredentialError> {
+    pub fn verify_password(
+        &mut self,
+        password: &str,
+        verifier: &impl Verifier,
+    ) -> Result<(), PasswordCredentialError> {
         if self.is_locked {
             return Err(PasswordCredentialError::AccountLocked);
         }
 
-        if self.password_hash.verify(password).is_ok() {
+        if self.password_hash.verify(password, verifier) {
             self.record_successful_login();
             Ok(())
         } else {
@@ -58,13 +68,20 @@ impl PasswordCredential {
         &mut self,
         current_password: &str,
         new_raw_password: &str,
+        verifier: &impl Verifier,
+        hasher: &impl Hasher,
     ) -> Result<(), PasswordCredentialError> {
-        if self.verify_password(current_password).is_err() {
+        if self.verify_password(current_password, verifier).is_err() {
             self.record_failed_attempt();
             return Err(PasswordCredentialError::InvalidCredentials);
         }
 
-        self.password_hash.update_hash(new_raw_password)?;
+        let hash_string = hasher
+            .hash(new_raw_password)
+            .map_err(|e| PasswordCredentialError::HashingError(e.to_string()))?;
+        self.password_hash = PasswordHash::try_from(hash_string)
+            .map_err(|e| PasswordCredentialError::HashingError(e.to_string()))?;
+
         self.unlock_account();
         self.audit_info.record_update();
         Ok(())
@@ -72,8 +89,13 @@ impl PasswordCredential {
     pub fn reset_password(
         &mut self,
         new_raw_password: &str,
+        hasher: &impl Hasher,
     ) -> Result<(), PasswordCredentialError> {
-        self.password_hash = PasswordHash::new(new_raw_password)?;
+        let hash_string = hasher
+            .hash(new_raw_password)
+            .map_err(|e| PasswordCredentialError::HashingError(e.to_string()))?;
+        self.password_hash = PasswordHash::try_from(hash_string)
+            .map_err(|e| PasswordCredentialError::HashingError(e.to_string()))?;
         self.unlock_account();
         self.audit_info.record_update();
         Ok(())
@@ -94,7 +116,7 @@ impl PasswordCredential {
         }
     }
 
-    pub fn from_persistent(
+    pub fn reconstitute(
         id: PasswordCredentialId,
         user_id: UserId,
         password_hash: PasswordHash,

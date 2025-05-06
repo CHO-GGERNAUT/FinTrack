@@ -48,7 +48,9 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
         .map_err(|e| {
             RepositoryError::Conflict { entity_type: ENTITY_TYPE, details: e.to_string() }
         })?;
-        Ok(result.into())
+        Ok(result
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
 
     async fn find_by_email(&mut self, email: &Email) -> Result<User, RepositoryError> {
@@ -64,13 +66,17 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
         ).fetch_optional(tx).await.map_err(|e| {
             RepositoryError::db(e)
         })?;
+
         if result.is_none() {
             return Err(RepositoryError::NotFound {
                 entity_type: ENTITY_TYPE,
                 id: email.as_str().to_string(),
             });
         }
-        Ok(result.unwrap().into())
+        Ok(result
+            .unwrap()
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
 
     async fn find_by_id(&mut self, id: UserId) -> Result<User, RepositoryError> {
@@ -95,7 +101,10 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
             });
         }
 
-        Ok(result.unwrap().into())
+        Ok(result
+            .unwrap()
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
     async fn update(&mut self, user: User) -> Result<User, RepositoryError> {
         let tx = self.tx.as_mut();
@@ -115,7 +124,9 @@ impl<'a> UserRepository for UserRepositoryPg<'a> {
         ).fetch_one(tx).await.map_err(|e| {
             RepositoryError::db(e)
         })?;
-        Ok(result.into())
+        Ok(result
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
     async fn delete(&mut self, id: UserId) -> Result<bool, RepositoryError> {
         let tx = self.tx.as_mut();

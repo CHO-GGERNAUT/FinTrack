@@ -2,7 +2,6 @@ CREATE TYPE user_status AS ENUM (
     'PendingActivation',
     'Active',
     'Inactive'
-    -- 필요시 다른 상태 추가
 );
 
 CREATE TABLE "users" (

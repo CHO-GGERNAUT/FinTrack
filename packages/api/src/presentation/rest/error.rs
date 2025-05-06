@@ -29,6 +29,9 @@ pub enum RestApiError {
     #[error("Bad Request: {0}")]
     BadRequest(String),
 
+    #[error("Authentication failed")]
+    Authentication,
+
     #[error(transparent)]
     Application(#[from] ApplicationError),
 }
@@ -49,41 +52,41 @@ impl IntoResponse for RestApiError {
                 Some(message),
                 None,
             ),
+            RestApiError::Authentication => (
+                StatusCode::UNAUTHORIZED,
+                "UNAUTHORIZED".to_string(),
+                None,
+                None,
+            ),
             RestApiError::Application(app_err) => match app_err {
-                ApplicationError::Validation(msg) => (
+                ApplicationError::Validation(err) => (
                     StatusCode::UNPROCESSABLE_ENTITY, // 422 사용
                     "Validation Failed".to_string(),
-                    Some(msg),
+                    Some(err.to_string()),
                     None,
                 ),
-                ApplicationError::NotFound(msg) => (
+                ApplicationError::NotFound(err) => (
                     StatusCode::NOT_FOUND,
                     "Resource Not Found".to_string(),
-                    Some(msg),
+                    Some(err.to_string()),
                     None,
                 ),
-                ApplicationError::Conflict(msg) => (
+                ApplicationError::Conflict(err) => (
                     StatusCode::CONFLICT,
                     "Conflict".to_string(),
-                    Some(msg),
+                    Some(err.to_string()),
                     None,
                 ),
-                ApplicationError::Authentication(msg) => (
+                ApplicationError::Authentication(err) => (
                     StatusCode::UNAUTHORIZED,
                     "Authentication Failed".to_string(),
-                    Some(msg),
+                    Some(err.to_string()),
                     None,
                 ),
-                ApplicationError::Authorization(msg) => (
-                    StatusCode::FORBIDDEN,
-                    "Authorization Failed".to_string(),
-                    Some(msg),
-                    None,
-                ),
-                ApplicationError::InternalError { source: _ } => (
+                ApplicationError::InternalError(err) => (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Internal Server Error".to_string(),
-                    Some("An unexpected internal error occurred.".to_string()),
+                    Some(err.to_string()),
                     None,
                 ),
             },

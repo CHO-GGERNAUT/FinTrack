@@ -41,7 +41,7 @@ impl User {
         self.audit_info.record_update();
     }
 
-    pub fn from_persistent(
+    pub fn reconstitute(
         id: UserId,
         email: Email,
         phone_number: PhoneNumber,

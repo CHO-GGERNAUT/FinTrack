@@ -1,6 +1,7 @@
 pub mod services {
     pub mod token_service;
-    pub use token_service::TokenService;
+
+    pub mod encryption_service;
 }
 
 pub mod unit_of_works {
@@ -9,4 +10,7 @@ pub mod unit_of_works {
 
     mod user_uow;
     pub use user_uow::UserUnitOfWork;
+
+    mod card_uow;
+    pub use card_uow::CardUnitOfWork;
 }

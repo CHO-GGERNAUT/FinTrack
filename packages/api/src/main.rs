@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
-use application::interfaces::services::TokenService;
+use application::interfaces::services::token_service::TokenService;
 use axum::middleware;
 use infrastructure::{
-    config::Config, persistence::postgres::connection::create_pool, services::TokenServiceImpl,
+    config::Config, persistence::postgres::connection::create_pool, services::JwtService,
 };
 use presentation::rest::middleware::auth_middleware;
 use tokio::net::TcpListener;
@@ -29,8 +29,7 @@ async fn main() {
         use axum::Extension;
         use presentation::rest::v1;
 
-        let token_service: Arc<dyn TokenService> =
-            Arc::new(TokenServiceImpl::new(&config.jwt_secret));
+        let token_service: Arc<dyn TokenService> = Arc::new(JwtService::new(&config.jwt_secret));
         let pool = create_pool().expect("Failed to create database pool");
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.server_port))
             .await

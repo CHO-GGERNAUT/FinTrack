@@ -8,6 +8,18 @@ pub struct AuditInfo {
 }
 
 impl AuditInfo {
+    pub fn new(
+        created_at: DateTime<Utc>,
+        updated_at: DateTime<Utc>,
+        deleted_at: Option<DateTime<Utc>>,
+    ) -> Self {
+        AuditInfo {
+            created_at,
+            updated_at,
+            deleted_at,
+        }
+    }
+
     pub fn record_creation() -> Self {
         let now = Utc::now();
         AuditInfo {
@@ -23,18 +35,6 @@ impl AuditInfo {
 
     pub fn record_deletion(&mut self) {
         self.deleted_at = Some(Utc::now());
-    }
-
-    pub fn from_persistent(
-        created_at: DateTime<Utc>,
-        updated_at: DateTime<Utc>,
-        deleted_at: Option<DateTime<Utc>>,
-    ) -> Self {
-        AuditInfo {
-            created_at,
-            updated_at,
-            deleted_at,
-        }
     }
 
     pub fn created_at(&self) -> DateTime<Utc> {

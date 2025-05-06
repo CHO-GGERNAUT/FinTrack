@@ -10,6 +10,7 @@ use crate::{
             entities::PasswordCredential, repository::PasswordCredentialRepository,
             value_objects::PasswordHash,
         },
+        shared::services::Hasher,
         user::{
             entities::User,
             repository::UserRepository,
@@ -28,20 +29,21 @@ pub struct RegisterUserPasswordResult {
     pub user_id: Uuid,
 }
 
-pub struct RegisterUserPasswordHandler<U: UserUnitOfWork> {
+pub struct RegisterUserPasswordHandler<U: UserUnitOfWork, H: Hasher> {
     uow: U,
+    hasher: H,
 }
 
-impl<U: UserUnitOfWork> RegisterUserPasswordHandler<U> {
-    pub fn new(uow: U) -> Self {
-        Self { uow }
+impl<U: UserUnitOfWork, H: Hasher> RegisterUserPasswordHandler<U, H> {
+    pub fn new(uow: U, hasher: H) -> Self {
+        Self { uow, hasher }
     }
 
     pub async fn execute(
         mut self,
         command: RegisterUserPasswordCommand,
     ) -> Result<RegisterUserPasswordResult, ApplicationError> {
-        let email = Email::new(&command.email)?;
+        let email = Email::try_from(command.email)?;
 
         if self
             .uow
@@ -52,16 +54,21 @@ impl<U: UserUnitOfWork> RegisterUserPasswordHandler<U> {
         {
             return Err(RepositoryError::Conflict {
                 entity_type: "User",
-                details: format!("Email already exists: {}", command.email),
+                details: format!("Email already exists: {}", email.as_str()),
             }
             .into());
         }
 
-        let phone_number = PhoneNumber::new(&command.phone_number)?;
+        let phone_number = PhoneNumber::try_from(command.phone_number)?;
         let user = User::register(email, phone_number);
         let user_id = user.id().clone();
         self.uow.user_repository().create(user).await?;
-        let password_hash = PasswordHash::new(&command.password)?;
+        let hash_string = self
+            .hasher
+            .hash(&command.password)
+            .map_err(|e| ApplicationError::internal(e))?;
+        let password_hash = PasswordHash::try_from(hash_string)?;
+
         let credential = PasswordCredential::new(user_id, password_hash)?;
         self.uow
             .password_credential_repository()

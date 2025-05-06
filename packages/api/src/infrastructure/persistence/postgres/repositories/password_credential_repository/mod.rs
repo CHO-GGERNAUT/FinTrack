@@ -41,7 +41,7 @@ impl<'a> PasswordCredentialRepository for PasswordCredentialRepositoryPg<'a> {
             "#,
             Into::<Uuid>::into(*credential.id()),
             Into::<Uuid>::into(*credential.user_id()),
-            credential.password_hash().to_string(),
+            credential.password_hash().as_str(),
             credential.is_locked(),
             credential.last_used_at(),
             credential.failed_attempts() as i32,
@@ -57,7 +57,9 @@ impl<'a> PasswordCredentialRepository for PasswordCredentialRepositoryPg<'a> {
             tracing::error!("DB error: {}", e);
             RepositoryError::Conflict { entity_type: ENTITY_TYPE, details: e.to_string() }
         })?;
-        Ok(result.into())
+        Ok(result
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
 
     async fn find_by_user_id(
@@ -78,7 +80,9 @@ impl<'a> PasswordCredentialRepository for PasswordCredentialRepositoryPg<'a> {
             RepositoryError::NotFound { entity_type: ENTITY_TYPE, id: user_id.as_deref().to_string() }
         })?;
 
-        Ok(result.into())
+        Ok(result
+            .try_into()
+            .map_err(|e| RepositoryError::invalid_data(e))?)
     }
 
     async fn update(&mut self, credential: PasswordCredential) -> Result<(), RepositoryError> {
@@ -91,7 +95,7 @@ impl<'a> PasswordCredentialRepository for PasswordCredentialRepositoryPg<'a> {
                 SET password_hash = $1, is_locked = $2, last_used_at = $3, failed_attempts = $4, updated_at = $5
                 WHERE id = $6 AND deleted_at IS NULL
             "#,
-            credential.password_hash().to_string(),
+            credential.password_hash().as_str(),
             credential.is_locked(),
             credential.last_used_at(),
             credential.failed_attempts() as i32,

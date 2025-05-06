@@ -8,9 +8,11 @@ use crate::{
         interfaces::services::token_service::Claims,
         queries::user::{GetUserHandler, GetUserQuery},
     },
-    infrastructure::persistence::postgres::unit_of_works::UserUnitOfWorkPg,
+    infrastructure::{
+        persistence::postgres::unit_of_works::UserUnitOfWorkPg, services::BcryptHashService,
+    },
     presentation::rest::{
-        error::RestApiResult,
+        error::{RestApiError, RestApiResult},
         v1::schemas::user::{CreateUserRequest, CreateUserResponse, UserResponse},
     },
 };
@@ -22,7 +24,9 @@ pub async fn create_user_handler(
     let uow = UserUnitOfWorkPg::new(pool)
         .await
         .map_err(|e| ApplicationError::from(e))?;
-    let handler = RegisterUserPasswordHandler::new(uow);
+
+    let hash_service = BcryptHashService;
+    let handler = RegisterUserPasswordHandler::new(uow, hash_service);
     let res = handler.execute(req.into()).await?;
     Ok(Json(res.into()))
 }
@@ -34,7 +38,7 @@ pub async fn get_user_handler(
     tracing::debug!("Claims: {:?}", claims);
     let user_id = claims
         .as_ref()
-        .ok_or(ApplicationError::Authorization("Unauthorized".to_string()))?
+        .ok_or(RestApiError::Authentication)?
         .sub
         .parse::<uuid::Uuid>()
         .unwrap();

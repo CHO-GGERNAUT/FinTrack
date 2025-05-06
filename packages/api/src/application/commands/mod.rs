@@ -7,3 +7,8 @@ pub mod auth {
     mod password_authenticate;
     pub use password_authenticate::*;
 }
+
+pub mod card {
+    mod issue_card;
+    pub use issue_card::*;
+}
