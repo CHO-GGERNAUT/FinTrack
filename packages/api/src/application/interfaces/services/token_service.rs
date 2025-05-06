@@ -15,7 +15,7 @@ pub trait TokenService: Send + Sync + 'static {
 
 #[derive(Error, Debug)]
 pub enum TokenServiceError {
-    #[error("Token createion Error({operation}):  {source}")]
+    #[error("Token creation Error({operation}):  {source}")]
     TokenCreationError {
         operation: &'static str,
         #[source]

@@ -29,7 +29,7 @@ impl TokenService for JwtService {
             &claims,
             &EncodingKey::from_secret(self.secret.as_bytes()),
         )
-        .map_err(|e| TokenServiceError::token_validation_error("issue_access_token", e))?;
+        .map_err(|e| TokenServiceError::token_creation_error("issue_access_token", e))?;
 
         Ok(token)
     }
@@ -45,7 +45,7 @@ impl TokenService for JwtService {
             &claims,
             &EncodingKey::from_secret(self.secret.as_bytes()),
         )
-        .map_err(|e| TokenServiceError::token_validation_error("issue_refresh_token", e))?;
+        .map_err(|e| TokenServiceError::token_creation_error("issue_refresh_token", e))?;
         Ok(token)
     }
 

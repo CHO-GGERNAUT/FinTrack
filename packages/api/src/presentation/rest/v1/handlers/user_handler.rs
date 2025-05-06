@@ -36,12 +36,16 @@ pub async fn get_user_handler(
     Extension(claims): Extension<Option<Claims>>,
 ) -> RestApiResult<Json<UserResponse>> {
     tracing::debug!("Claims: {:?}", claims);
-    let user_id = claims
+    let user_id_str = claims
         .as_ref()
         .ok_or(RestApiError::Authentication)?
         .sub
+        .clone(); // Clone sub to avoid borrowing issues if parse fails early
+
+    let user_id = user_id_str
         .parse::<uuid::Uuid>()
-        .unwrap();
+        .map_err(|_| RestApiError::BadRequest("Invalid user ID format in token".to_string()))?;
+
     let uow = UserUnitOfWorkPg::new(pool)
         .await
         .map_err(|e| ApplicationError::from(e))?;
